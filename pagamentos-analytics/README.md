@@ -146,7 +146,7 @@ As medidas foram organizadas em pastas lógicas para facilitar manutenção, aud
 
 # Página 1 — Visão Executiva
 
-![Visão Executiva](imagens/1_Visão_Executiva.png)
+![Visão Executiva](Imagens/1_Visão_Executiva.png)
 
 A primeira página foi criada para apresentar uma visão consolidada do desempenho do negócio.
 
@@ -183,7 +183,7 @@ Para meses em aberto, o resultado é comparado com o mesmo intervalo do mês ant
 
 # Página 2 — Análise de Clientes e Carteira
 
-![Análise de Clientes e Carteira](imagens/2_Estabelecimentos.png)
+![Análise de Clientes e Carteira](Imagens/2_Estabelecimentos.png)
 
 A segunda página foi desenvolvida para aprofundar a análise comercial da carteira de estabelecimentos.
 
@@ -259,7 +259,7 @@ Os quadrantes foram utilizados para classificar os estabelecimentos entre:
 
 # Página 3 — Performance Operacional
 
-![Performance Operacional](imagens/3_Operacional.png)
+![Performance Operacional](Imagens/3_Operacional.png)
 
 A terceira página foi desenvolvida para explicar a eficiência operacional das transações.
 
