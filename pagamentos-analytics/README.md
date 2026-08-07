@@ -13,20 +13,21 @@ A solução foi construída com dados sintéticos e percorre o processo completo
 - [x] Página 1 — Visão Executiva
 - [x] Página 2 — Análise de Clientes e Carteira
 - [x] Página 3 — Performance Operacional
-- [ ] Página 4 — Qualidade e Conciliação
+- [x] Página 4 — Qualidade e Conciliação
 - [ ] Revisão final e limpeza do modelo
 
-> **Versão em desenvolvimento:** as três primeiras páginas estão concluídas visualmente e com as principais regras de negócio validadas. O arquivo `.pbix` ainda passará por uma revisão final, com a exclusão de medidas DAX auxiliares, testes e objetos que não serão necessários na versão publicada. O objetivo dessa etapa é deixar o modelo mais limpo, organizado e fácil de manter.
+> **Versão em desenvolvimento:** as quatro páginas do dashboard estão concluídas visualmente e com as principais regras de negócio validadas. O arquivo `.pbix` ainda passará por uma revisão final, com a exclusão de medidas DAX auxiliares, testes e objetos que não serão necessários na versão publicada. O objetivo dessa etapa é deixar o modelo mais limpo, organizado e fácil de manter.
 
 ### Imagens utilizadas no README
 
-O README apresenta somente a imagem principal de cada página:
+O README apresenta a imagem principal de cada página:
 
 - `imagens/1_Visão_Executiva.png`
 - `imagens/2_Estabelecimentos.png`
 - `imagens/3_Operacional.png`
+- `imagens/4_Qualidade.png`
 
-Os arquivos com numeração adicional no final, como `_1` e `_2`, registram tooltips e detalhes complementares do desenvolvimento. Eles permanecem na pasta de imagens como documentação visual, mas não foram inseridos no README para manter a apresentação mais objetiva.
+Os arquivos com numeração adicional no final, como `_1` e `_2`, registram tooltips, interações e detalhes complementares do desenvolvimento. Na Página 4, o arquivo `4_Qualidade_2.png` também é apresentado no README por documentar o painel retrátil de investigação, uma das principais interações da solução.
 
 ## Objetivo
 
@@ -41,6 +42,9 @@ O projeto foi criado para demonstrar conhecimentos técnicos e de negócio aplic
 - concentração da carteira;
 - motivos de negativa;
 - latência e eficiência operacional;
+- qualidade e conciliação de dados;
+- identificação de divergências, duplicidades e ausências entre camadas;
+- priorização de investigação por exposição financeira;
 - comparação temporal;
 - criação de diagnósticos e recomendações acionáveis.
 
@@ -146,7 +150,7 @@ As medidas foram organizadas em pastas lógicas para facilitar manutenção, aud
 
 # Página 1 — Visão Executiva
 
-![Visão Executiva](Imagens/1_Visão_Executiva.png)
+![Visão Executiva](imagens/1_Visão_Executiva.png)
 
 A primeira página foi criada para apresentar uma visão consolidada do desempenho do negócio.
 
@@ -183,7 +187,7 @@ Para meses em aberto, o resultado é comparado com o mesmo intervalo do mês ant
 
 # Página 2 — Análise de Clientes e Carteira
 
-![Análise de Clientes e Carteira](Imagens/2_Estabelecimentos.png)
+![Análise de Clientes e Carteira](imagens/2_Estabelecimentos.png)
 
 A segunda página foi desenvolvida para aprofundar a análise comercial da carteira de estabelecimentos.
 
@@ -259,7 +263,7 @@ Os quadrantes foram utilizados para classificar os estabelecimentos entre:
 
 # Página 3 — Performance Operacional
 
-![Performance Operacional](Imagens/3_Operacional.png)
+![Performance Operacional](imagens/3_Operacional.png)
 
 A terceira página foi desenvolvida para explicar a eficiência operacional das transações.
 
@@ -409,6 +413,192 @@ Exemplos de validação:
 
 ---
 
+
+# Página 4 — Qualidade e Conciliação
+
+![Qualidade e Conciliação](imagens/4_Qualidade.png)
+
+A quarta página foi desenvolvida para simular uma camada de **Data Quality, auditoria e conciliação** dentro do projeto.
+
+O objetivo foi comparar a passagem do dado entre três estágios lógicos:
+
+**Origem → Banco → Modelo**
+
+A estrutura de conciliação foi mantida isolada da fato transacional utilizada nas páginas anteriores. Dessa forma, as simulações de divergência e as regras de qualidade não alteram os indicadores executivos, comerciais ou operacionais já construídos.
+
+## Principais perguntas respondidas
+
+- Qual percentual dos registros permanece íntegro após percorrer todas as etapas?
+- Onde ocorre a maior perda entre Origem, Banco e Modelo?
+- Quais tipos de divergência concentram mais ocorrências?
+- Qual é o impacto financeiro efetivamente apurado pelas diferenças de valor?
+- Qual volume financeiro está exposto em registros que exigem investigação?
+- Quais adquirentes e estabelecimentos devem ser investigados primeiro?
+
+## Arquitetura da conciliação
+
+A página representa o processo de forma sequencial:
+
+```mermaid
+flowchart LR
+    A[Origem] --> B[Banco]
+    B --> C[Modelo]
+    C --> D[Registros Elegíveis]
+    D --> E[Registros Conciliados]
+```
+
+As regras verificam presença, duplicidade, status e valor entre as camadas. A classificação foi construída com precedência para evitar que o mesmo registro seja contabilizado simultaneamente em mais de uma categoria principal.
+
+Entre as classificações previstas estão:
+
+- Registro Inválido;
+- Duplicado;
+- Pendente de Carga;
+- Somente na Origem;
+- Somente no Banco;
+- Ausente no Modelo;
+- Divergência Múltipla;
+- Divergência de Valor;
+- Divergência de Status;
+- Conciliado.
+
+**Pendente de Carga** representa um registro que ainda está dentro do SLA esperado de processamento. Por isso, enquanto permanece dentro da janela definida, não é tratado como erro e não entra no total de divergências abertas.
+
+## Indicadores principais
+
+A camada executiva da página foi construída com seis indicadores:
+
+- **Índice de Integridade:** percentual dos registros elegíveis que chegaram ao estado conciliado;
+- **Registros Conciliados:** volume que percorreu as validações sem divergência;
+- **Divergências Abertas:** casos que exigem análise ou correção, desconsiderando pendências ainda dentro do SLA;
+- **Impacto Financeiro:** diferença financeira efetivamente apurada quando os valores entre as camadas não coincidem;
+- **Registros Duplicados:** ocorrências identificadas mais de uma vez no processo;
+- **Ausente no Modelo:** registros presentes nas etapas anteriores, mas não localizados na camada analítica após o prazo esperado.
+
+Uma decisão importante foi separar **Impacto Financeiro** de **Valor Financeiro Exposto**.
+
+O primeiro representa a diferença monetária comprovada em registros com divergência de valor. Já o segundo representa o valor associado aos registros que estão sob risco ou investigação, mesmo quando não existe uma diferença monetária direta. O Valor Financeiro Exposto é utilizado principalmente na priorização operacional.
+
+## Evolução do Índice de Integridade
+
+O gráfico de evolução acompanha mensalmente o Índice de Integridade e utiliza uma meta de referência de **98%**.
+
+A intenção é identificar deterioração ou recuperação da qualidade ao longo do tempo, mantendo a leitura temporal separada da análise causal apresentada nos demais visuais.
+
+## Retenção por Etapa
+
+O visual de retenção mostra quanto do volume consegue avançar entre etapas consecutivas:
+
+- Origem → Banco;
+- Banco → Modelo;
+- Modelo → Elegíveis;
+- Elegíveis → Conciliados.
+
+Em vez de utilizar apenas um funil tradicional, foram criadas medidas específicas de retenção entre cada estágio. Isso permite identificar em qual ponto do processo ocorre a maior perda de eficiência.
+
+As cores são condicionais e funcionam como sinalização visual de qualidade, utilizando verde, âmbar e vermelho conforme o desempenho da etapa.
+
+## Tipos de Divergência
+
+O ranking de divergências apresenta os casos de não integridade ordenados por quantidade.
+
+Essa análise responde à pergunta **“qual é a principal causa da perda de integridade?”**, separando problemas como divergência de status, divergência de valor, duplicidade, ausência no modelo e registros presentes em apenas uma das camadas.
+
+O maior tipo de divergência recebe destaque visual, enquanto os demais permanecem em grafite para preservar a hierarquia da página.
+
+## Insight Executivo
+
+O bloco de Insight Executivo resume automaticamente o principal ponto de atenção do contexto filtrado.
+
+Ele combina:
+
+- Índice de Integridade;
+- divergências abertas;
+- impacto financeiro;
+- maior categoria de divergência;
+- auditoria estrutural;
+- ação recomendada.
+
+A proposta é transformar os indicadores em uma leitura acionável, direcionando o usuário para o próximo passo de investigação.
+
+## Priorização para Investigação
+
+A priorização utiliza o **Valor Financeiro Exposto** para ordenar as adquirentes que merecem atenção primeiro.
+
+O ranking apresenta:
+
+- posição;
+- adquirente;
+- principal tipo de divergência;
+- valor financeiro exposto.
+
+Essa visão é propositalmente resumida. O objetivo é evitar uma tabela operacional muito extensa na página principal e deixar o detalhamento disponível somente quando necessário.
+
+## Painel retrátil de investigação
+
+![Painel retrátil de investigação](imagens/4_Qualidade_2.png)
+
+Uma das principais interações da Página 4 é o **painel retrátil de investigação**, aberto a partir do botão de detalhamento do ranking.
+
+O painel foi construído como uma camada sobreposta à página e permite aprofundar a análise sem exigir uma nova página de relatório. A interação utiliza controle de visibilidade e navegação por bookmark, mantendo a visão executiva limpa quando o detalhe não é necessário.
+
+A tabela de investigação apresenta:
+
+- adquirente;
+- nome fantasia do estabelecimento;
+- tipo de divergência;
+- classificação de prioridade;
+- quantidade de casos.
+
+As prioridades são representadas por classificações como **Crítica, Alta, Média e Baixa**, utilizando cores semânticas para facilitar a leitura.
+
+Essa estrutura cria duas camadas de análise:
+
+**Visão executiva → Ranking de prioridade → Investigação detalhada**
+
+Assim, o usuário pode começar pelo impacto geral e chegar aos casos específicos sem sobrecarregar o dashboard principal.
+
+## Tooltip técnico de investigação
+
+A investigação é complementada por um tooltip contextual desenvolvido para apresentar informações adicionais somente quando o usuário precisa aprofundar um caso.
+
+Entre os elementos apresentados estão:
+
+- quantidade de casos;
+- posição no ranking de priorização;
+- prioridade;
+- valor financeiro exposto;
+- participação no valor exposto da adquirente;
+- impacto financeiro apurado;
+- situação do SLA;
+- presença do registro em Origem, Banco e Modelo;
+- ação recomendada.
+
+O SLA também respeita o tipo de divergência. Casos de ausência entre etapas podem ser avaliados contra a janela esperada de processamento, enquanto divergências de valor, status ou duplicidade podem receber a indicação de que o SLA não se aplica.
+
+## Decisões de modelagem e performance
+
+A página foi construída com algumas decisões para evitar que o detalhamento prejudicasse a experiência do relatório:
+
+- a lógica de conciliação foi isolada das páginas 1, 2 e 3;
+- a página principal mantém a leitura executiva e delega o detalhe ao painel retrátil e aos tooltips;
+- SVG foi utilizado de forma pontual para enriquecer diagnósticos e elementos de apoio;
+- visuais nativos foram mantidos sempre que atendiam bem à análise;
+- medidas de retenção foram calculadas por etapa para evitar interpretações incorretas de um funil genérico;
+- filtros de data, adquirente, canal, meio de pagamento e bandeira preservam o contexto da investigação.
+
+## Validações da conciliação
+
+As principais regras foram revisadas para garantir consistência entre os indicadores e as classificações:
+
+- um registro dentro do SLA não é tratado como divergência aberta;
+- a comparação de status considera o mesmo instante de referência entre as camadas;
+- registros duplicados são tratados separadamente das demais divergências;
+- Impacto Financeiro e Valor Financeiro Exposto possuem finalidades diferentes;
+- o Índice de Integridade é reconciliado com o volume elegível e conciliado;
+- ranking, painel retrátil e tooltip respeitam o contexto aplicado pelos filtros.
+
+---
 # Uso de SVG
 
 O SVG foi utilizado de forma estratégica para complementar os visuais nativos do Power BI.
@@ -460,7 +650,10 @@ Projetos_Power-BI/
     │   ├── 2_Estabelecimentos_2.png
     │   ├── 3_Operacional.png
     │   ├── 3_Operacional_1.png
-    │   └── 3_Operacional_2.png
+    │   ├── 3_Operacional_2.png
+    │   ├── 4_Qualidade.png
+    │   ├── 4_Qualidade_1.png
+    │   └── 4_Qualidade_2.png
     └── PagamentosAnalytics.pbix
 ```
 
@@ -489,17 +682,16 @@ O arquivo publicado não deve conter:
 - informações pessoais;
 - dados confidenciais de empresas ou clientes.
 
-# Próxima etapa
+# Etapa final
 
-A próxima página prevista é **Qualidade e Conciliação**, com foco em:
+Com as quatro páginas concluídas, a próxima etapa do projeto é a revisão técnica da versão de portfólio, com foco em:
 
-- divergências entre fontes;
-- duplicidades;
-- status inconsistentes;
-- transações sem correspondência;
-- diferenças de valor;
-- indicadores de qualidade;
-- auditoria e reconciliação.
+- remover medidas DAX auxiliares e objetos de teste;
+- revisar nomes e pastas de medidas;
+- validar bookmarks, tooltips e interações;
+- revisar relacionamentos e colunas não utilizadas;
+- documentar as regras finais de qualidade e conciliação;
+- realizar a validação final antes da publicação da versão consolidada.
 
 # Aprendizados do projeto
 
@@ -517,6 +709,10 @@ Durante o desenvolvimento foram aplicados e aprofundados conhecimentos em:
 - mapa de calor;
 - latência P95;
 - ranking;
+- Data Quality e conciliação;
+- retenção entre etapas de processamento;
+- priorização por exposição financeira;
+- bookmarks e painéis retráteis;
 - SVG;
 - tooltips personalizados;
 - organização de um projeto de portfólio.
