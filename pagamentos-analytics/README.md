@@ -22,10 +22,10 @@ A solução foi construída com dados sintéticos e percorre o processo completo
 
 O README apresenta a imagem principal de cada página:
 
-- `imagens/1_Visão_Executiva.png`
-- `imagens/2_Estabelecimentos.png`
-- `imagens/3_Operacional.png`
-- `imagens/4_Qualidade.png`
+- `Imagens/1_Visão_Executiva.png`
+- `Imagens/2_Estabelecimentos.png`
+- `Imagens/3_Operacional.png`
+- `Imagens/4_Qualidade.png`
 
 Os arquivos com numeração adicional no final, como `_1` e `_2`, registram tooltips, interações e detalhes complementares do desenvolvimento. Na Página 4, o arquivo `4_Qualidade_2.png` também é apresentado no README por documentar o painel retrátil de investigação, uma das principais interações da solução.
 
@@ -150,7 +150,7 @@ As medidas foram organizadas em pastas lógicas para facilitar manutenção, aud
 
 # Página 1 — Visão Executiva
 
-![Visão Executiva](imagens/1_Visão_Executiva.png)
+![Visão Executiva](Imagens/1_Visão_Executiva.png)
 
 A primeira página foi criada para apresentar uma visão consolidada do desempenho do negócio.
 
@@ -187,7 +187,7 @@ Para meses em aberto, o resultado é comparado com o mesmo intervalo do mês ant
 
 # Página 2 — Análise de Clientes e Carteira
 
-![Análise de Clientes e Carteira](imagens/2_Estabelecimentos.png)
+![Análise de Clientes e Carteira](Imagens/2_Estabelecimentos.png)
 
 A segunda página foi desenvolvida para aprofundar a análise comercial da carteira de estabelecimentos.
 
@@ -263,7 +263,7 @@ Os quadrantes foram utilizados para classificar os estabelecimentos entre:
 
 # Página 3 — Performance Operacional
 
-![Performance Operacional](imagens/3_Operacional.png)
+![Performance Operacional](Imagens/3_Operacional.png)
 
 A terceira página foi desenvolvida para explicar a eficiência operacional das transações.
 
@@ -416,7 +416,7 @@ Exemplos de validação:
 
 # Página 4 — Qualidade e Conciliação
 
-![Qualidade e Conciliação](imagens/4_Qualidade.png)
+![Qualidade e Conciliação](Imagens/4_Qualidade.png)
 
 A quarta página foi desenvolvida para simular uma camada de **Data Quality, auditoria e conciliação** dentro do projeto.
 
@@ -536,7 +536,7 @@ Essa visão é propositalmente resumida. O objetivo é evitar uma tabela operaci
 
 ## Painel retrátil de investigação
 
-![Painel retrátil de investigação](imagens/4_Qualidade_2.png)
+![Painel retrátil de investigação](Imagens/4_Qualidade_2.png)
 
 Uma das principais interações da Página 4 é o **painel retrátil de investigação**, aberto a partir do botão de detalhamento do ranking.
 
@@ -643,7 +643,7 @@ O dashboard utiliza o seguinte padrão:
 Projetos_Power-BI/
 └── pagamentos-analytics/
     ├── README.md
-    ├── imagens/
+    ├── Imagens/
     │   ├── 1_Visão_Executiva.png
     │   ├── 2_Estabelecimentos.png
     │   ├── 2_Estabelecimentos_1.png
