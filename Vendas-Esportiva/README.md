@@ -27,7 +27,7 @@ Com base nas medidas e visualizações confirmadas no modelo, o dashboard busca 
 
 O Power Query do modelo confirma que **todas as tabelas são carregadas via conexão direta a um banco PostgreSQL** (`PostgreSQL.Database("localhost", "postgres")`, schema `public`), a partir das tabelas `venda_itens`, `produtos`, `clientes`, `enderecos` e `vendedores` — não há arquivos CSV ou Excel na origem dos dados do relatório.
 
-A etapa anterior ao Power BI (criação do banco, definição das tabelas e geração/inserção dos dados fictícios via Python) foi descrita pelo autor nas publicações que documentaram o desenvolvimento do projeto no LinkedIn. Essa camada não pôde ser verificada diretamente porque os scripts Python e SQL não fazem parte da pasta preservada deste projeto — apenas o arquivo `.pbix` e as imagens do dashboard foram mantidos. Conforme relatado pelo autor, o fluxo foi:
+A etapa anterior ao Power BI (criação do banco, definição das tabelas e geração/inserção dos dados fictícios via Python) foi documentada pelo autor em uma publicação no LinkedIn, com prints do diagrama de entidades do banco e do terminal durante a carga dos dados. Os arquivos de script (Python e SQL) não fazem parte da pasta preservada deste projeto — apenas o arquivo `.pbix`, as imagens do dashboard e os prints do desenvolvimento foram mantidos. Segundo relatado pelo autor: as tabelas foram criadas diretamente no **pgAdmin 4** (`CREATE TABLE`), e o Python foi usado apenas para os inserts a partir dos arquivos CSV, em lotes (batches de 5.000 registros), com validação de chaves estrangeiras antes da carga — registros inválidos eram exportados para um CSV de rejeitados. O fluxo relatado foi:
 
 ```
 Python (geração/tratamento de dados fictícios)
@@ -43,9 +43,15 @@ Dashboard executivo (Vendas / Produtos / Vendedores)
 
 O autor também descreveu que o layout das páginas foi planejado previamente no Figma antes de ser reproduzido no Power BI — não há arquivo de design na pasta do projeto para confirmar isso de forma independente.
 
+![Diagrama de entidades do banco PostgreSQL](imagem/Diagrama.jpg)
+
+![Script Python de carga (InsertVendas.py) executando upserts em lote](imagem/Python.jpg)
+
 ## 🗄️ Banco de dados
 
 Confirmado via Power Query: banco PostgreSQL local (`postgres`), schema `public`, com 5 tabelas usadas pelo relatório — `venda_itens`, `produtos`, `clientes`, `enderecos` e `vendedores`. Não há evidência, nos arquivos preservados, de views, procedures ou índices — o Power BI lê as tabelas diretamente.
+
+O autor descreveu o modelo do banco como um esquema estrela: 1 tabela fato (`venda_itens`), 3 dimensões (`produtos`, `vendedores` e `clientes`) e 1 subdimensão (`enderecos`, relacionada a `clientes`) — estrutura que coincide com o modelo fato/dimensão confirmado diretamente no Power BI.
 
 | Informação | Valor |
 |---|---:|
@@ -204,7 +210,8 @@ Segundo a documentação do desenvolvimento feita pelo autor, o ponto de partida
 - **PostgreSQL** — banco de dados de origem, acessado via conector nativo `PostgreSQL.Database`.
 - **Power Query (linguagem M)** — leitura das tabelas do banco.
 - **DAX** — 118 medidas, incluindo inteligência de tempo, ranking dinâmico, classificação de produtos e textos executivos gerados dinamicamente.
-- **Python** — citado pelo autor como responsável pela geração/inserção dos dados fictícios no PostgreSQL; os scripts não fazem parte da pasta preservada deste projeto.
+- **pgAdmin 4** — usado para criação das tabelas (`CREATE TABLE`) do banco PostgreSQL, confirmado por print do desenvolvimento compartilhado pelo autor.
+- **Python** — usado para inserção dos dados fictícios via CSV nas tabelas do PostgreSQL, com validação de integridade referencial (FK) e carga em lotes; confirmado por print do terminal, embora os scripts não façam parte da pasta preservada deste projeto.
 - **Figma** — citado pelo autor como ferramenta usada para planejar o layout antes da construção no Power BI; não há arquivos de design na pasta do projeto.
 
 ## 🧠 Aprendizados
@@ -248,7 +255,9 @@ dashboard-vendas-esportivas/
 └── imagem/
     ├── Pagina1.png    # Vendas - visão executiva
     ├── Pagina2.png    # Produtos - matriz de rentabilidade e curva ABC
-    └── Pagina3.png    # Vendedores - desempenho de equipes
+    ├── Pagina3.png    # Vendedores - desempenho de equipes
+    ├── Diagrama.jpg   # Diagrama de entidades do banco PostgreSQL
+    └── Python.jpg     # Print do terminal durante a carga dos dados via Python
 ```
 
 Os scripts de banco de dados (PostgreSQL) e de geração de dados (Python) mencionados no desenvolvimento do projeto não fazem parte desta pasta.
