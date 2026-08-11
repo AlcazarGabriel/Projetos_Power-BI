@@ -1,22 +1,22 @@
-# Pagamentos Analytics
+# 💳 Pagamentos Analytics
 
 Projeto de Business Intelligence desenvolvido em **Power BI** para simular o ambiente analítico de uma empresa do setor de meios de pagamento.
 
 A solução foi construída com dados sintéticos e percorre o processo completo de um projeto de dados: organização das fontes, tratamento no Power Query, modelagem semântica, criação de medidas em DAX, desenvolvimento dos dashboards, validação dos indicadores e documentação das regras de negócio.
 
-## Acesso ao dashboard
+## 🔗 Acesso ao dashboard
 
-🔗 [Visualizar o dashboard publicado no Power BI](https://app.powerbi.com/view?r=eyJrIjoiNGU1NzA5NWQtNDU1Ny00Yjg0LWJjODktYTc3MjRmZGRlZWYxIiwidCI6IjMxMGJmZTRmLWUyMTQtNDUzZC04ZTM1LWM5YmYzYzM4MWQyMSJ9)
+🔗 [Visualizar o dashboard publicado no Power BI](https://app.powerbi.com/view?r=eyJrIjoiNGU1NzA5NWQtNDU1Ny00Yjg0LWJjODktYTc3MjRmZGRlZWYxIiwidCI6IjMxMGJmZTRmLWUyMTQtNDUzZC04ZTM1LWM5YmYzYzM4MWQyMSJ9) — publicado em 07/08/2026
 
-## Status do projeto
+## ✅ Status do projeto
 
 - [x] Página 1 — Visão Executiva
 - [x] Página 2 — Análise de Clientes e Carteira
 - [x] Página 3 — Performance Operacional
 - [x] Página 4 — Qualidade e Conciliação
-- [ ] Revisão final e limpeza do modelo
+- [x] Revisão final e limpeza do modelo
 
-> **Versão em desenvolvimento:** as quatro páginas do dashboard estão concluídas visualmente e com as principais regras de negócio validadas. O arquivo `.pbix` ainda passará por uma revisão final, com a exclusão de medidas DAX auxiliares, testes e objetos que não serão necessários na versão publicada. O objetivo dessa etapa é deixar o modelo mais limpo, organizado e fácil de manter.
+> **Projeto finalizado (07/08/2026):** as quatro páginas do dashboard estão concluídas, com as regras de negócio validadas e o modelo revisado. O arquivo `.pbix` publicado corresponde à versão final de portfólio.
 
 ### Imagens utilizadas no README
 
@@ -29,7 +29,7 @@ O README apresenta a imagem principal de cada página:
 
 Os arquivos com numeração adicional no final, como `_1` e `_2`, registram tooltips, interações e detalhes complementares do desenvolvimento. Na Página 4, o arquivo `4_Qualidade_2.png` também é apresentado no README por documentar o painel retrátil de investigação, uma das principais interações da solução.
 
-## Objetivo
+## 🎯 Objetivo
 
 O projeto foi criado para demonstrar conhecimentos técnicos e de negócio aplicados ao setor de pagamentos, com foco em:
 
@@ -48,7 +48,7 @@ O projeto foi criado para demonstrar conhecimentos técnicos e de negócio aplic
 - comparação temporal;
 - criação de diagnósticos e recomendações acionáveis.
 
-## Tecnologias utilizadas
+## 🧰 Tecnologias utilizadas
 
 - Power BI Desktop
 - Power Query M
@@ -59,7 +59,7 @@ O projeto foi criado para demonstrar conhecimentos técnicos e de negócio aplic
 - Power BI Service
 - Git e GitHub
 
-## Arquitetura do projeto
+## 🏗️ Arquitetura do projeto
 
 ```mermaid
 flowchart LR
@@ -71,7 +71,7 @@ flowchart LR
     F --> G[Validação e publicação]
 ```
 
-## Dados utilizados
+## 🗂️ Dados utilizados
 
 O projeto utiliza dados sintéticos de portfólio.
 
@@ -97,7 +97,7 @@ Também foram utilizadas dimensões auxiliares de:
 - calendário;
 - metas mensais.
 
-## Processo de desenvolvimento
+## ⚙️ Processo de desenvolvimento
 
 ### 1. Organização das fontes
 
@@ -148,7 +148,7 @@ As medidas foram organizadas em pastas lógicas para facilitar manutenção, aud
 
 ---
 
-# Página 1 — Visão Executiva
+# 📊 Página 1 — Visão Executiva
 
 ![Visão Executiva](Imagens/1_Visão_Executiva.png)
 
@@ -185,7 +185,7 @@ Para meses em aberto, o resultado é comparado com o mesmo intervalo do mês ant
 
 ---
 
-# Página 2 — Análise de Clientes e Carteira
+# 👥 Página 2 — Análise de Clientes e Carteira
 
 ![Análise de Clientes e Carteira](Imagens/2_Estabelecimentos.png)
 
@@ -261,7 +261,7 @@ Os quadrantes foram utilizados para classificar os estabelecimentos entre:
 
 ---
 
-# Página 3 — Performance Operacional
+# ⚡ Página 3 — Performance Operacional
 
 ![Performance Operacional](Imagens/3_Operacional.png)
 
@@ -414,7 +414,7 @@ Exemplos de validação:
 ---
 
 
-# Página 4 — Qualidade e Conciliação
+# 🔍 Página 4 — Qualidade e Conciliação
 
 ![Qualidade e Conciliação](Imagens/4_Qualidade.png)
 
@@ -599,7 +599,7 @@ As principais regras foram revisadas para garantir consistência entre os indica
 - ranking, painel retrátil e tooltip respeitam o contexto aplicado pelos filtros.
 
 ---
-# Uso de SVG
+# 🖼️ Uso de SVG
 
 O SVG foi utilizado de forma estratégica para complementar os visuais nativos do Power BI.
 
@@ -622,7 +622,7 @@ Essa abordagem ajuda a:
 - preservar a performance;
 - criar uma experiência mais personalizada.
 
-# Sistema visual
+# 🎨 Sistema visual
 
 O dashboard utiliza o seguinte padrão:
 
@@ -637,7 +637,7 @@ O dashboard utiliza o seguinte padrão:
 | Cards | Cinza claro, cantos arredondados e borda inferior marcada |
 | Textos | Títulos curtos e detalhes em subtítulos ou tooltips |
 
-# Estrutura do repositório
+# 📁 Estrutura do repositório
 
 ```text
 Projetos_Power-BI/
@@ -657,11 +657,7 @@ Projetos_Power-BI/
     └── PagamentosAnalytics.pbix
 ```
 
-# Como abrir o projeto
-
-> O arquivo `PagamentosAnalytics.pbix` ainda está em revisão final. Algumas medidas DAX auxiliares e de teste serão excluídas antes da consolidação da versão de portfólio.
-
-Quando o arquivo estiver disponível no repositório:
+# ▶️ Como abrir o projeto
 
 1. Faça o download de `PagamentosAnalytics.pbix`.
 2. Abra o arquivo no Power BI Desktop.
@@ -669,7 +665,7 @@ Quando o arquivo estiver disponível no repositório:
 4. Atualize os dados.
 5. Navegue entre as páginas utilizando o menu lateral.
 
-# Cuidados com os dados
+# ⚠️ Cuidados com os dados
 
 Todos os dados utilizados neste projeto são sintéticos e foram criados exclusivamente para fins de portfólio.
 
@@ -682,18 +678,20 @@ O arquivo publicado não deve conter:
 - informações pessoais;
 - dados confidenciais de empresas ou clientes.
 
-# Etapa final
+# 🏁 Etapa final
 
-Com as quatro páginas concluídas, a próxima etapa do projeto é a revisão técnica da versão de portfólio, com foco em:
+Com as quatro páginas concluídas, o projeto passou por uma revisão técnica final antes da consolidação da versão de portfólio, com foco em:
 
-- remover medidas DAX auxiliares e objetos de teste;
-- revisar nomes e pastas de medidas;
-- validar bookmarks, tooltips e interações;
-- revisar relacionamentos e colunas não utilizadas;
-- documentar as regras finais de qualidade e conciliação;
-- realizar a validação final antes da publicação da versão consolidada.
+- remoção de medidas DAX auxiliares e objetos de teste;
+- revisão de nomes e pastas de medidas;
+- validação de bookmarks, tooltips e interações;
+- revisão de relacionamentos e colunas não utilizadas;
+- documentação das regras finais de qualidade e conciliação;
+- validação final antes da publicação da versão consolidada.
 
-# Aprendizados do projeto
+O projeto foi finalizado e publicado em 07/08/2026.
+
+# 🧠 Aprendizados do projeto
 
 Durante o desenvolvimento foram aplicados e aprofundados conhecimentos em:
 
@@ -717,7 +715,7 @@ Durante o desenvolvimento foram aplicados e aprofundados conhecimentos em:
 - tooltips personalizados;
 - organização de um projeto de portfólio.
 
-# Autor
+# 👤 Autor
 
 **Gabriel Alcazar**
 
@@ -726,4 +724,4 @@ Durante o desenvolvimento foram aplicados e aprofundados conhecimentos em:
 
 ---
 
-Este projeto está em evolução e será atualizado conforme novas páginas, validações e melhorias forem adicionadas.
+Projeto finalizado em 07/08/2026.
