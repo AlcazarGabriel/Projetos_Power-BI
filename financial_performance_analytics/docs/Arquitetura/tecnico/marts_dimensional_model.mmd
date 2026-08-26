@@ -1,0 +1,52 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#d1fae5', 'primaryBorderColor': '#10b981', 'primaryTextColor': '#0f172a', 'lineColor': '#64748b', 'fontFamily': 'Segoe UI, Arial, sans-serif', 'fontSize': '16px'}, 'flowchart': {'nodeSpacing': 60, 'rankSpacing': 70, 'diagramPadding': 24}}}%%
+flowchart TB
+    subgraph DIMS["Dimensões"]
+        direction LR
+        D_DATE["dim_date\nPK date_key"]
+        D_BRANCH["dim_branch\nPK branch_key"]
+        D_ACCOUNT["dim_account\nPK account_key"]
+        D_CC["dim_cost_center\nPK cost_center_key"]
+        D_CUST["dim_customer\nPK customer_key"]
+        D_PROD["dim_product\nPK product_key"]
+        D_DRE["dim_dre\nPK dre_key"]
+        D_CARRIER["dim_carrier\nPK carrier_key"]
+        D_REP["dim_sales_representative\nPK sales_rep_key"]
+    end
+
+    subgraph FACTS["Fatos"]
+        direction LR
+        F_FIN["fct_financial_entries\nPK financial_entry_key\naccounting_amount · management_amount"]
+        F_BUD["fct_budget\nPK budget_key\nbudget_amount"]
+        F_SALES["fct_sales\nPK sales_key\nnet_sales_amount · canceled_net_amount"]
+        F_DELIV["fct_deliveries\nPK delivery_key\nfreight_cost_total · on_time_flag"]
+    end
+
+    D_DATE --> F_FIN
+    D_BRANCH --> F_FIN
+    D_CC --> F_FIN
+    D_ACCOUNT --> F_FIN
+    D_DRE --> F_FIN
+    D_CUST --> F_FIN
+    D_CARRIER --> F_FIN
+
+    D_DATE --> F_BUD
+    D_BRANCH --> F_BUD
+    D_CC --> F_BUD
+    D_ACCOUNT --> F_BUD
+    D_DRE --> F_BUD
+
+    D_DATE --> F_SALES
+    D_BRANCH --> F_SALES
+    D_CUST --> F_SALES
+    D_PROD --> F_SALES
+    D_REP --> F_SALES
+
+    D_DATE --> F_DELIV
+    D_BRANCH --> F_DELIV
+    D_CUST --> F_DELIV
+    D_CARRIER --> F_DELIV
+
+    classDef dim fill:#dbeafe,stroke:#3b82f6,color:#0f172a
+    classDef fct fill:#d1fae5,stroke:#10b981,color:#0f172a
+    class D_DATE,D_BRANCH,D_ACCOUNT,D_CC,D_CUST,D_PROD,D_DRE,D_CARRIER,D_REP dim
+    class F_FIN,F_BUD,F_SALES,F_DELIV fct

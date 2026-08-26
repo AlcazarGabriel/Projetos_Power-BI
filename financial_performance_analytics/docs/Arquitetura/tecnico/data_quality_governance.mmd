@@ -1,0 +1,32 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#fff7ed', 'primaryBorderColor': '#f97316', 'primaryTextColor': '#0f172a', 'lineColor': '#64748b', 'fontFamily': 'Segoe UI, Arial, sans-serif', 'fontSize': '16px'}}}%%
+flowchart TB
+    subgraph INGEST["Ingestão (RAW)"]
+        PR["raw.pipeline_runs\n1 execução de carga"]
+        IC["raw.ingestion_control\n1 arquivo por linha, SHA-256"]
+        PR --> IC
+    end
+
+    subgraph ISSUES["Detecção de problemas"]
+        DQI["control.data_quality_issues\nissues por regra/severidade"]
+        JB["control.v_journal_balance_issues\ndébito ≠ crédito por lançamento"]
+        JH["control.v_journal_header_line_issues\nheader × linhas divergentes"]
+    end
+
+    subgraph QUALITY["Testes automatizados por camada"]
+        IQR["control.intermediate_quality_runs"] --> IQRes["control.intermediate_quality_results"]
+        MQR["control.marts_quality_runs"] --> MQRes["control.marts_quality_results"]
+    end
+
+    IC -->|"associado a"| DQI
+    IC -.->|"origem"| JB
+    IC -.->|"origem"| JH
+
+    style PR fill:#fff7ed,stroke:#f97316,color:#0f172a
+    style IC fill:#fff7ed,stroke:#f97316,color:#0f172a
+    style DQI fill:#fee2e2,stroke:#ef4444,color:#0f172a
+    style JB fill:#fee2e2,stroke:#ef4444,color:#0f172a
+    style JH fill:#fee2e2,stroke:#ef4444,color:#0f172a
+    style IQR fill:#ede9fe,stroke:#8b5cf6,color:#0f172a
+    style IQRes fill:#ede9fe,stroke:#8b5cf6,color:#0f172a
+    style MQR fill:#d1fae5,stroke:#10b981,color:#0f172a
+    style MQRes fill:#d1fae5,stroke:#10b981,color:#0f172a

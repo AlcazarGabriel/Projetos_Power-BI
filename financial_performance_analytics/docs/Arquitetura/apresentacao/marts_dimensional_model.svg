@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#1e293b" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1350" fill="#f5f6f8"/>
+  <rect x="18" y="18" width="1044" height="1314" rx="14" fill="none" stroke="#1e2a4a" stroke-width="2"/>
+
+  <!-- Header -->
+  <circle cx="90" cy="55" r="3" fill="#1e2a4a"/>
+  <line x1="103" y1="55" x2="313" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <text x="540" y="61" text-anchor="middle" font-size="17" letter-spacing="3" fill="#1e2a4a" font-weight="700">FINANCIAL PERFORMANCE ANALYTICS</text>
+  <line x1="767" y1="55" x2="977" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <circle cx="990" cy="55" r="3" fill="#1e2a4a"/>
+
+  <text x="540" y="130" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#16233f">Modelo Dimensional MARTS</text>
+  <text x="540" y="168" text-anchor="middle" font-size="21" fill="#5b6b85">4 fatos · 9 dimensões conformadas</text>
+
+  <!-- FATOS section -->
+  <circle cx="150" cy="215" r="3" fill="#16a34a"/>
+  <line x1="163" y1="215" x2="463" y2="215" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="540" y="221" text-anchor="middle" font-size="22" letter-spacing="2" font-weight="700" fill="#15803d">FATOS</text>
+  <line x1="617" y1="215" x2="917" y2="215" stroke="#bbf7d0" stroke-width="1.5"/>
+  <circle cx="930" cy="215" r="3" fill="#16a34a"/>
+
+  <!-- Fact cards 2x2: x=140/550 w=390 h=150 ; y=250/420 -->
+  <g filter="url(#cardShadow)"><rect x="140" y="250" width="390" height="150" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/></g>
+  <rect x="140" y="250" width="8" height="150" rx="4" fill="#16a34a"/>
+  <circle cx="205" cy="300" r="32" fill="#dcfce7"/>
+  <g transform="translate(185,280)" stroke="#16a34a" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20,4 L34,11 V27 L20,34 L6,27 V11 Z"/>
+    <path d="M20,4 V18 M6,11 L20,18 L34,11 M20,18 V34"/>
+  </g>
+  <text x="255" y="294" font-size="21" font-weight="700" fill="#0f172a">fct_financial_entries</text>
+  <text x="255" y="322" font-size="15" fill="#047857">accounting_amount</text>
+  <text x="255" y="343" font-size="15" fill="#047857">management_amount</text>
+
+  <g filter="url(#cardShadow)"><rect x="550" y="250" width="390" height="150" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/></g>
+  <rect x="550" y="250" width="8" height="150" rx="4" fill="#16a34a"/>
+  <circle cx="615" cy="300" r="32" fill="#dcfce7"/>
+  <g transform="translate(595,280)" stroke="#16a34a" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20,4 L34,11 V27 L20,34 L6,27 V11 Z"/>
+    <path d="M20,4 V18 M6,11 L20,18 L34,11 M20,18 V34"/>
+  </g>
+  <text x="665" y="308" font-size="21" font-weight="700" fill="#0f172a">fct_budget</text>
+  <text x="665" y="336" font-size="15" fill="#047857">budget_amount</text>
+
+  <g filter="url(#cardShadow)"><rect x="140" y="420" width="390" height="150" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/></g>
+  <rect x="140" y="420" width="8" height="150" rx="4" fill="#16a34a"/>
+  <circle cx="205" cy="470" r="32" fill="#dcfce7"/>
+  <g transform="translate(185,450)" stroke="#16a34a" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20,4 L34,11 V27 L20,34 L6,27 V11 Z"/>
+    <path d="M20,4 V18 M6,11 L20,18 L34,11 M20,18 V34"/>
+  </g>
+  <text x="255" y="478" font-size="21" font-weight="700" fill="#0f172a">fct_deliveries</text>
+  <text x="255" y="506" font-size="15" fill="#047857">freight_cost_total</text>
+
+  <g filter="url(#cardShadow)"><rect x="550" y="420" width="390" height="150" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/></g>
+  <rect x="550" y="420" width="8" height="150" rx="4" fill="#16a34a"/>
+  <circle cx="615" cy="470" r="32" fill="#dcfce7"/>
+  <g transform="translate(595,450)" stroke="#16a34a" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20,4 L34,11 V27 L20,34 L6,27 V11 Z"/>
+    <path d="M20,4 V18 M6,11 L20,18 L34,11 M20,18 V34"/>
+  </g>
+  <text x="665" y="464" font-size="21" font-weight="700" fill="#0f172a">fct_sales</text>
+  <text x="665" y="492" font-size="15" fill="#047857">net_sales_amount</text>
+  <text x="665" y="513" font-size="15" fill="#047857">canceled_net_amount</text>
+
+  <!-- DIMENSOES section -->
+  <circle cx="150" cy="622" r="3" fill="#2563eb"/>
+  <line x1="163" y1="622" x2="463" y2="622" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="540" y="628" text-anchor="middle" font-size="22" letter-spacing="2" font-weight="700" fill="#1d4ed8">DIMENSÕES</text>
+  <line x1="617" y1="622" x2="917" y2="622" stroke="#bfdbfe" stroke-width="1.5"/>
+  <circle cx="930" cy="622" r="3" fill="#2563eb"/>
+
+  <!-- Dim grid 3x3: cols x=140,420,700 w=260 h=125 ; rows y=655,795,935 -->
+  <!-- row 1 -->
+  <g filter="url(#cardShadow)"><rect x="140" y="655" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="140" y="655" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="192" cy="717" r="26" fill="#dbeafe"/>
+  <g transform="translate(178,703)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="230" y="723" font-size="19" font-weight="700" fill="#0f172a">dim_date</text>
+
+  <g filter="url(#cardShadow)"><rect x="420" y="655" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="420" y="655" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="472" cy="717" r="26" fill="#dbeafe"/>
+  <g transform="translate(458,703)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="510" y="723" font-size="19" font-weight="700" fill="#0f172a">dim_branch</text>
+
+  <g filter="url(#cardShadow)"><rect x="700" y="655" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="700" y="655" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="752" cy="717" r="26" fill="#dbeafe"/>
+  <g transform="translate(738,703)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="790" y="723" font-size="19" font-weight="700" fill="#0f172a">dim_account</text>
+
+  <!-- row 2 -->
+  <g filter="url(#cardShadow)"><rect x="140" y="795" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="140" y="795" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="192" cy="857" r="26" fill="#dbeafe"/>
+  <g transform="translate(178,843)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="230" y="863" font-size="19" font-weight="700" fill="#0f172a">dim_cost_center</text>
+
+  <g filter="url(#cardShadow)"><rect x="420" y="795" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="420" y="795" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="472" cy="857" r="26" fill="#dbeafe"/>
+  <g transform="translate(458,843)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="510" y="863" font-size="19" font-weight="700" fill="#0f172a">dim_customer</text>
+
+  <g filter="url(#cardShadow)"><rect x="700" y="795" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="700" y="795" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="752" cy="857" r="26" fill="#dbeafe"/>
+  <g transform="translate(738,843)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="790" y="863" font-size="19" font-weight="700" fill="#0f172a">dim_product</text>
+
+  <!-- row 3 -->
+  <g filter="url(#cardShadow)"><rect x="140" y="935" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="140" y="935" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="192" cy="997" r="26" fill="#dbeafe"/>
+  <g transform="translate(178,983)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="230" y="1003" font-size="19" font-weight="700" fill="#0f172a">dim_dre</text>
+
+  <g filter="url(#cardShadow)"><rect x="420" y="935" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="420" y="935" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="472" cy="997" r="26" fill="#dbeafe"/>
+  <g transform="translate(458,983)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="510" y="1003" font-size="19" font-weight="700" fill="#0f172a">dim_carrier</text>
+
+  <g filter="url(#cardShadow)"><rect x="700" y="935" width="260" height="125" rx="12" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="700" y="935" width="7" height="125" rx="3.5" fill="#2563eb"/>
+  <circle cx="752" cy="997" r="26" fill="#dbeafe"/>
+  <g transform="translate(738,983)" stroke="#2563eb" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="14" cy="6" rx="10" ry="4"/>
+    <path d="M4,6 V22 A10,4 0 0 0 24,22 V6"/>
+    <path d="M4,14 A10,4 0 0 0 24,14"/>
+  </g>
+  <text x="790" y="987" font-size="19" font-weight="700" fill="#0f172a">dim_sales_</text>
+  <text x="790" y="1009" font-size="19" font-weight="700" fill="#0f172a">representative</text>
+
+  <!-- Caption -->
+  <text x="540" y="1100" text-anchor="middle" font-size="18" fill="#334155">Cada dimensão conecta-se a 1 ou mais fatos pela chave</text>
+  <text x="540" y="1126" text-anchor="middle" font-size="18" fill="#334155">correspondente (branch_key, date_key, customer_key…)</text>
+
+  <!-- Footer -->
+  <line x1="60" y1="1250" x2="1020" y2="1250" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="540" y="1284" text-anchor="middle" font-size="15" fill="#94a3b8">financial_performance_analytics</text>
+
+  <g transform="translate(60,1272)">
+    <circle cx="18" cy="18" r="18" fill="#eef2f7" stroke="#1e2a4a" stroke-width="1.2"/>
+    <path d="M10,22 C10,14 14,10 18,10 C22,10 26,14 26,20 C26,24 24,26 22,26 L22,23 C22,21 21,20 19,20 L17,20 C15,20 14,22 14,24 L14,27" fill="none" stroke="#1e2a4a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="15" cy="16" r="1" fill="#1e2a4a"/>
+    <circle cx="21" cy="16" r="1" fill="#1e2a4a"/>
+  </g>
+</svg>

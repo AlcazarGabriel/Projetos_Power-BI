@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e293b" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrowN" viewBox="0 0 10 10" refX="5" refY="8" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L5,8 L10,0 z" fill="#1e2a4a"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="1350" fill="#f5f6f8"/>
+  <rect x="18" y="18" width="1044" height="1314" rx="14" fill="none" stroke="#1e2a4a" stroke-width="2"/>
+
+  <!-- Header -->
+  <circle cx="90" cy="55" r="3" fill="#1e2a4a"/>
+  <line x1="103" y1="55" x2="313" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <text x="540" y="61" text-anchor="middle" font-size="17" letter-spacing="3" fill="#1e2a4a" font-weight="700">FINANCIAL PERFORMANCE ANALYTICS</text>
+  <line x1="767" y1="55" x2="977" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <circle cx="990" cy="55" r="3" fill="#1e2a4a"/>
+
+  <text x="540" y="130" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" fill="#16233f">Arquitetura do Pipeline</text>
+  <text x="540" y="168" text-anchor="middle" font-size="21" fill="#5b6b85">Da origem ao Power BI, em cinco camadas no PostgreSQL</text>
+
+  <!-- CONTROL / QUALITY badge -->
+  <g filter="url(#cardShadow)">
+    <rect x="42" y="590" width="176" height="190" rx="14" fill="#ffffff" stroke="#fde3b8" stroke-width="1.5"/>
+  </g>
+  <rect x="42" y="590" width="8" height="190" rx="4" fill="#f59e0b"/>
+  <circle cx="130" cy="650" r="34" fill="#fef3c7"/>
+  <g transform="translate(106,626)" stroke="#f59e0b" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24,4 L40,10 V22 C40,32 33,38 24,40 C15,38 8,32 8,22 V10 Z"/>
+    <path d="M16,22 L21,27 L32,15"/>
+  </g>
+  <text x="130" y="710" text-anchor="middle" font-size="18" font-weight="700" fill="#b45309">CONTROL /</text>
+  <text x="130" y="732" text-anchor="middle" font-size="18" font-weight="700" fill="#b45309">QUALITY</text>
+  <text x="130" y="758" text-anchor="middle" font-size="14" fill="#92400e">Auditoria</text>
+  <text x="130" y="775" text-anchor="middle" font-size="14" fill="#92400e">contínua</text>
+
+  <line x1="222" y1="660" x2="256" y2="660" stroke="#f59e0b" stroke-width="2" stroke-dasharray="2 5"/>
+
+  <!-- Card template values: x=250 width=640 height=112 -->
+
+  <!-- 1 ERP / Dados Sinteticos -->
+  <g filter="url(#cardShadow)"><rect x="250" y="205" width="640" height="112" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/></g>
+  <rect x="250" y="205" width="9" height="112" rx="4" fill="#64748b"/>
+  <circle cx="326" cy="261" r="36" fill="#f1f5f9"/>
+  <g transform="translate(302,237)" stroke="#64748b" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="24" cy="10" rx="16" ry="6"/>
+    <path d="M8,10 V32 A16,6 0 0 0 40,32 V10"/>
+    <path d="M8,21 A16,6 0 0 0 40,21"/>
+  </g>
+  <text x="382" y="252" font-size="26" font-weight="700" fill="#16233f">1. ERP / Dados Sintéticos</text>
+  <text x="382" y="282" font-size="17" fill="#5b6b85">Fonte dos dados (CSVs)</text>
+  <line x1="570" y1="317" x2="570" y2="355" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 2 RAW -->
+  <g filter="url(#cardShadow)"><rect x="250" y="355" width="640" height="112" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/></g>
+  <rect x="250" y="355" width="9" height="112" rx="4" fill="#64748b"/>
+  <circle cx="326" cy="411" r="36" fill="#f1f5f9"/>
+  <g transform="translate(302,387)" stroke="#64748b" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="24" cy="10" rx="16" ry="6"/>
+    <path d="M8,10 V32 A16,6 0 0 0 40,32 V10"/>
+    <path d="M8,21 A16,6 0 0 0 40,21"/>
+  </g>
+  <text x="382" y="402" font-size="26" font-weight="700" fill="#16233f">2. RAW</text>
+  <text x="382" y="432" font-size="17" fill="#5b6b85">Cópia fiel da origem</text>
+  <line x1="570" y1="467" x2="570" y2="505" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 3 STAGING -->
+  <g filter="url(#cardShadow)"><rect x="250" y="505" width="640" height="112" rx="14" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+  <rect x="250" y="505" width="9" height="112" rx="4" fill="#2563eb"/>
+  <circle cx="326" cy="561" r="36" fill="#dbeafe"/>
+  <g transform="translate(302,537)" stroke="#2563eb" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8,10 H40 L26,26 V38 L22,36 V26 Z"/>
+  </g>
+  <text x="382" y="552" font-size="26" font-weight="700" fill="#1d4ed8">3. STAGING</text>
+  <text x="382" y="582" font-size="17" fill="#5b6b85">Tipagem e padronização</text>
+  <line x1="570" y1="617" x2="570" y2="655" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 4 INTERMEDIATE -->
+  <g filter="url(#cardShadow)"><rect x="250" y="655" width="640" height="112" rx="14" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+  <rect x="250" y="655" width="9" height="112" rx="4" fill="#7c3aed"/>
+  <circle cx="326" cy="711" r="36" fill="#ede9fe"/>
+  <g transform="translate(302,687)" fill="#7c3aed" stroke="#7c3aed" stroke-width="1" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="8" fill="none" stroke-width="3"/>
+    <circle cx="24" cy="24" r="3" fill="#7c3aed" stroke="none"/>
+    <rect x="21.5" y="3" width="5" height="8" rx="1.5"/>
+    <rect x="21.5" y="37" width="5" height="8" rx="1.5"/>
+    <rect x="3" y="21.5" width="8" height="5" rx="1.5"/>
+    <rect x="37" y="21.5" width="8" height="5" rx="1.5"/>
+    <rect x="21.5" y="21.5" width="5" height="8" rx="1.5" transform="rotate(45 24 24)"/>
+    <rect x="21.5" y="21.5" width="5" height="8" rx="1.5" transform="rotate(-45 24 24)"/>
+    <rect x="21.5" y="21.5" width="5" height="8" rx="1.5" transform="rotate(135 24 24)"/>
+    <rect x="21.5" y="21.5" width="5" height="8" rx="1.5" transform="rotate(-135 24 24)"/>
+  </g>
+  <text x="382" y="702" font-size="26" font-weight="700" fill="#6d28d9">4. INTERMEDIATE</text>
+  <text x="382" y="732" font-size="17" fill="#5b6b85">Regras de negócio e DRE</text>
+  <line x1="570" y1="767" x2="570" y2="805" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 5 MARTS -->
+  <g filter="url(#cardShadow)"><rect x="250" y="805" width="640" height="112" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/></g>
+  <rect x="250" y="805" width="9" height="112" rx="4" fill="#16a34a"/>
+  <circle cx="326" cy="861" r="36" fill="#dcfce7"/>
+  <g transform="translate(302,837)" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24,5 L41,13.5 V32.5 L24,41 L7,32.5 V13.5 Z"/>
+    <path d="M24,5 V23 M7,13.5 L24,23 L41,13.5 M24,23 V41"/>
+  </g>
+  <text x="382" y="852" font-size="26" font-weight="700" fill="#15803d">5. MARTS</text>
+  <text x="382" y="882" font-size="17" fill="#5b6b85">Fatos e dimensões</text>
+  <line x1="570" y1="917" x2="570" y2="955" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 6 Semantic Model -->
+  <g filter="url(#cardShadow)"><rect x="250" y="955" width="640" height="112" rx="14" fill="#ffffff" stroke="#fde3b8" stroke-width="1.5"/></g>
+  <rect x="250" y="955" width="9" height="112" rx="4" fill="#ea8a1f"/>
+  <circle cx="326" cy="1011" r="36" fill="#fef3c7"/>
+  <g transform="translate(302,987)" stroke="#ea8a1f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24,6 L41,15 L24,24 L7,15 Z"/>
+    <path d="M7,24 L24,33 L41,24"/>
+    <path d="M7,33 L24,42 L41,33"/>
+  </g>
+  <text x="382" y="1002" font-size="26" font-weight="700" fill="#b45309">6. Semantic Model</text>
+  <text x="382" y="1032" font-size="17" fill="#5b6b85">Camada semântica de negócio</text>
+  <line x1="570" y1="1067" x2="570" y2="1105" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 7 Power BI -->
+  <g filter="url(#cardShadow)"><rect x="250" y="1105" width="640" height="112" rx="14" fill="#ffffff" stroke="#fde68a" stroke-width="1.5"/></g>
+  <rect x="250" y="1105" width="9" height="112" rx="4" fill="#eab308"/>
+  <circle cx="326" cy="1161" r="36" fill="#fef9c3"/>
+  <g transform="translate(302,1137)" stroke="#eab308" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="10" y1="40" x2="10" y2="30"/>
+    <line x1="19" y1="40" x2="19" y2="24"/>
+    <line x1="28" y1="40" x2="28" y2="16"/>
+    <path d="M14,20 L24,10 L38,10 M38,10 V18"/>
+  </g>
+  <text x="382" y="1152" font-size="26" font-weight="700" fill="#a16207">7. Power BI</text>
+  <text x="382" y="1182" font-size="17" fill="#5b6b85">Consumo e decisão</text>
+
+  <!-- Footer -->
+  <line x1="60" y1="1250" x2="1020" y2="1250" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="540" y="1284" text-anchor="middle" font-size="18" fill="#334155">Pipeline PostgreSQL auditado em cada execução</text>
+
+  <g transform="translate(60,1300)">
+    <circle cx="18" cy="18" r="18" fill="#eef2f7" stroke="#1e2a4a" stroke-width="1.2"/>
+    <path d="M10,22 C10,14 14,10 18,10 C22,10 26,14 26,20 C26,24 24,26 22,26 L22,23 C22,21 21,20 19,20 L17,20 C15,20 14,22 14,24 L14,27" fill="none" stroke="#1e2a4a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="15" cy="16" r="1" fill="#1e2a4a"/>
+    <circle cx="21" cy="16" r="1" fill="#1e2a4a"/>
+  </g>
+  <text x="108" y="1313" font-size="13" fill="#94a3b8">financial_performance_analytics</text>
+</svg>

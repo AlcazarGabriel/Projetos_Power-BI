@@ -1,0 +1,23 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#eef2ff', 'primaryBorderColor': '#6366f1', 'primaryTextColor': '#1e1b4b', 'lineColor': '#64748b', 'fontFamily': 'Segoe UI, Arial, sans-serif', 'fontSize': '16px'}}}%%
+flowchart LR
+    RAW["<b>RAW</b>\nCópia fiel da origem\n· 29 tabelas · carga incremental SHA-256"]
+
+    STG["<b>STAGING</b>\nTipagem e padronização\n· 29 views · sem regra de negócio"]
+
+    INT["<b>INTERMEDIATE</b>\nRegras gerenciais\n· DRE · rateios · reconciliações"]
+
+    MART["<b>MARTS</b>\nFatos e dimensões\n· 4 fatos · 9 dimensões"]
+
+    CTRL["<b>CONTROL / QUALITY</b>\nAuditoria e rastreabilidade\n· pipeline runs · quality tests"]
+
+    RAW --> STG --> INT --> MART
+    CTRL -.-> RAW
+    CTRL -.-> STG
+    CTRL -.-> INT
+    CTRL -.-> MART
+
+    style RAW fill:#f1f5f9,stroke:#64748b,color:#0f172a,text-align:left
+    style STG fill:#dbeafe,stroke:#3b82f6,color:#0f172a,text-align:left
+    style INT fill:#ede9fe,stroke:#8b5cf6,color:#0f172a,text-align:left
+    style MART fill:#d1fae5,stroke:#10b981,color:#0f172a,text-align:left
+    style CTRL fill:#fff7ed,stroke:#f97316,color:#0f172a,text-align:left

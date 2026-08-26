@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#1e293b" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrowN" viewBox="0 0 10 10" refX="5" refY="8" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L5,8 L10,0 z" fill="#1e2a4a"/>
+    </marker>
+  </defs>
+
+  <rect width="1080" height="1350" fill="#f5f6f8"/>
+  <rect x="18" y="18" width="1044" height="1314" rx="14" fill="none" stroke="#1e2a4a" stroke-width="2"/>
+
+  <!-- Header -->
+  <circle cx="90" cy="55" r="3" fill="#1e2a4a"/>
+  <line x1="103" y1="55" x2="313" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <text x="540" y="61" text-anchor="middle" font-size="17" letter-spacing="3" fill="#1e2a4a" font-weight="700">FINANCIAL PERFORMANCE ANALYTICS</text>
+  <line x1="767" y1="55" x2="977" y2="55" stroke="#1e2a4a" stroke-width="1.2"/>
+  <circle cx="990" cy="55" r="3" fill="#1e2a4a"/>
+
+  <text x="540" y="130" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="#16233f">Auditoria e Qualidade</text>
+  <text x="540" y="168" text-anchor="middle" font-size="21" fill="#5b6b85">Do arquivo recebido ao dado liberado para consumo</text>
+
+  <!-- cards x=140 w=800 h=125 step=145, start 205 -->
+
+  <!-- 1 Pipeline Run -->
+  <g filter="url(#cardShadow)"><rect x="140" y="205" width="800" height="118" rx="14" fill="#ffffff" stroke="#fde3b8" stroke-width="1.5"/></g>
+  <rect x="140" y="205" width="9" height="118" rx="4" fill="#ea8a1f"/>
+  <circle cx="210" cy="264" r="34" fill="#fef3c7"/>
+  <g transform="translate(188,242)" stroke="#ea8a1f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="17"/>
+    <path d="M19,15 L34,24 L19,33 Z" fill="#ea8a1f" stroke="none"/>
+  </g>
+  <text x="266" y="257" font-size="26" font-weight="700" fill="#b45309">1. Pipeline Run</text>
+  <text x="266" y="287" font-size="17" fill="#64748b">raw.pipeline_runs</text>
+  <line x1="540" y1="323" x2="540" y2="357" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 2 Ingestion Control -->
+  <g filter="url(#cardShadow)"><rect x="140" y="357" width="800" height="118" rx="14" fill="#ffffff" stroke="#fde3b8" stroke-width="1.5"/></g>
+  <rect x="140" y="357" width="9" height="118" rx="4" fill="#ea8a1f"/>
+  <circle cx="210" cy="416" r="34" fill="#fef3c7"/>
+  <g transform="translate(188,394)" stroke="#ea8a1f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14,6 H28 L34,12 V42 H14 Z"/>
+    <path d="M28,6 V12 H34"/>
+    <line x1="18" y1="22" x2="30" y2="22"/>
+    <line x1="18" y1="29" x2="30" y2="29"/>
+    <line x1="18" y1="36" x2="26" y2="36"/>
+  </g>
+  <text x="266" y="409" font-size="26" font-weight="700" fill="#b45309">2. Ingestion Control</text>
+  <text x="266" y="438" font-size="17" fill="#64748b">raw.ingestion_control · SHA-256 por arquivo</text>
+  <line x1="540" y1="475" x2="540" y2="509" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 3 Automated Tests -->
+  <g filter="url(#cardShadow)"><rect x="140" y="509" width="800" height="118" rx="14" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+  <rect x="140" y="509" width="9" height="118" rx="4" fill="#7c3aed"/>
+  <circle cx="210" cy="568" r="34" fill="#ede9fe"/>
+  <g transform="translate(188,546)" stroke="#7c3aed" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="8" width="32" height="32" rx="9"/>
+    <path d="M16,24 L21,29 L33,16"/>
+  </g>
+  <text x="266" y="561" font-size="26" font-weight="700" fill="#6d28d9">3. Automated Tests</text>
+  <text x="266" y="590" font-size="17" fill="#64748b">intermediate_quality_runs · marts_quality_runs</text>
+  <line x1="540" y1="627" x2="540" y2="661" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 4 Quality Results -->
+  <g filter="url(#cardShadow)"><rect x="140" y="661" width="800" height="118" rx="14" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+  <rect x="140" y="661" width="9" height="118" rx="4" fill="#7c3aed"/>
+  <circle cx="210" cy="720" r="34" fill="#ede9fe"/>
+  <g transform="translate(188,698)" stroke="#7c3aed" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="38" x2="12" y2="26"/>
+    <line x1="24" y1="38" x2="24" y2="16"/>
+    <line x1="36" y1="38" x2="36" y2="22"/>
+  </g>
+  <text x="266" y="713" font-size="26" font-weight="700" fill="#6d28d9">4. Quality Results</text>
+  <text x="266" y="742" font-size="17" fill="#64748b">pass / fail por teste, com contagem de issues</text>
+  <line x1="540" y1="779" x2="540" y2="813" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 5 Issues / Reconciliation -->
+  <g filter="url(#cardShadow)"><rect x="140" y="813" width="800" height="130" rx="14" fill="#ffffff" stroke="#fecaca" stroke-width="1.5"/></g>
+  <rect x="140" y="813" width="9" height="130" rx="4" fill="#ef4444"/>
+  <circle cx="210" cy="878" r="34" fill="#fee2e2"/>
+  <g transform="translate(188,856)" stroke="#dc2626" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="17"/>
+    <line x1="24" y1="15" x2="24" y2="26"/>
+    <circle cx="24" cy="33" r="1.4" fill="#dc2626" stroke="none"/>
+  </g>
+  <text x="266" y="871" font-size="26" font-weight="700" fill="#b91c1c">5. Issues / Reconciliation</text>
+  <text x="266" y="900" font-size="17" fill="#64748b">data_quality_issues · balanço e header × linhas</text>
+  <line x1="540" y1="943" x2="540" y2="977" stroke="#1e2a4a" stroke-width="2" marker-end="url(#arrowN)"/>
+
+  <!-- 6 Quality Gate -->
+  <g filter="url(#cardShadow)"><rect x="140" y="977" width="800" height="130" rx="14" fill="#ffffff" stroke="#bbf7d0" stroke-width="2"/></g>
+  <rect x="140" y="977" width="9" height="130" rx="4" fill="#16a34a"/>
+  <circle cx="210" cy="1042" r="34" fill="#dcfce7"/>
+  <g transform="translate(188,1020)" stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24,4 L40,10 V22 C40,32 33,38 24,40 C15,38 8,32 8,22 V10 Z"/>
+    <path d="M16,22 L21,27 L32,15"/>
+  </g>
+  <text x="266" y="1035" font-size="27" font-weight="700" fill="#15803d">6. Quality Gate</text>
+  <text x="266" y="1064" font-size="17" fill="#64748b">libera MARTS para Power BI</text>
+
+  <!-- Footer -->
+  <line x1="60" y1="1250" x2="1020" y2="1250" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="540" y="1284" text-anchor="middle" font-size="18" fill="#334155">Nenhum dado chega ao Power BI sem passar pelo gate</text>
+
+  <g transform="translate(60,1300)">
+    <circle cx="18" cy="18" r="18" fill="#eef2f7" stroke="#1e2a4a" stroke-width="1.2"/>
+    <path d="M10,22 C10,14 14,10 18,10 C22,10 26,14 26,20 C26,24 24,26 22,26 L22,23 C22,21 21,20 19,20 L17,20 C15,20 14,22 14,24 L14,27" fill="none" stroke="#1e2a4a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="15" cy="16" r="1" fill="#1e2a4a"/>
+    <circle cx="21" cy="16" r="1" fill="#1e2a4a"/>
+  </g>
+  <text x="108" y="1313" font-size="13" fill="#94a3b8">financial_performance_analytics</text>
+</svg>

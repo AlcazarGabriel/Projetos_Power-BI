@@ -1,0 +1,34 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#eef2ff', 'primaryBorderColor': '#6366f1', 'primaryTextColor': '#1e1b4b', 'lineColor': '#64748b', 'fontFamily': 'Segoe UI, Arial, sans-serif', 'fontSize': '16px'}}}%%
+flowchart LR
+    SRC["ERP / Dados Sintéticos\nCSVs de origem (mestres, planning, actual)"]
+
+    subgraph PIPE["Pipeline PostgreSQL"]
+        direction LR
+        RAW["RAW\n29 tabelas fiéis à origem"]
+        STG["STAGING\n29 views tipadas e padronizadas"]
+        INT["INTERMEDIATE\nDRE, rateios, reconciliação"]
+        MART["MARTS\n4 fatos + 9 dimensões"]
+        RAW --> STG --> INT --> MART
+    end
+
+    SEM["Semantic Model"]
+    BI["Power BI"]
+
+    CTRL[("CONTROL / QUALITY\nauditoria e rastreabilidade")]
+
+    SRC -->|"carga incremental (SHA-256)"| RAW
+    MART -->|"consumo exclusivo"| SEM
+    SEM --> BI
+
+    CTRL -.->|"pipeline_runs, ingestion_control"| RAW
+    CTRL -.->|"quality tests"| INT
+    CTRL -.->|"quality tests"| MART
+
+    style SRC fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    style RAW fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    style STG fill:#dbeafe,stroke:#3b82f6,color:#0f172a
+    style INT fill:#ede9fe,stroke:#8b5cf6,color:#0f172a
+    style MART fill:#d1fae5,stroke:#10b981,color:#0f172a
+    style SEM fill:#fef3c7,stroke:#f59e0b,color:#0f172a
+    style BI fill:#fef9c3,stroke:#eab308,color:#0f172a
+    style CTRL fill:#fff7ed,stroke:#f97316,color:#0f172a

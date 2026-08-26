@@ -1,0 +1,21 @@
+# Ambiente / segredos
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Dados (nunca versionar bases brutas aqui)
+*.csv
+*.zip
+*.xlsx
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

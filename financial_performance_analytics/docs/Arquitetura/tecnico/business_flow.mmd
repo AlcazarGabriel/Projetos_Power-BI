@@ -1,0 +1,21 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#eef2ff', 'primaryBorderColor': '#6366f1', 'primaryTextColor': '#1e1b4b', 'lineColor': '#64748b', 'fontFamily': 'Segoe UI, Arial, sans-serif', 'fontSize': '16px'}}}%%
+flowchart LR
+    CLI["Cliente\nerp_customers"]
+    PED["Pedido\nerp_sales_orders / erp_sales_order_items"]
+    FAT["Faturamento\nerp_invoices / erp_invoice_items → fct_sales"]
+    ENT["Entrega\nerp_deliveries → fct_deliveries"]
+    CONT["Contabilização\nerp_journal_entries / erp_journal_lines → fct_financial_entries"]
+    DRE["DRE Gerencial\naccount_dre_mapping → dre_lines → dre_key"]
+
+    CLI -->|"faz"| PED
+    PED -->|"gera"| FAT
+    FAT -->|"expede"| ENT
+    FAT -->|"lança"| CONT
+    CONT -->|"classifica por"| DRE
+
+    style CLI fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    style PED fill:#dbeafe,stroke:#3b82f6,color:#0f172a
+    style FAT fill:#dbeafe,stroke:#3b82f6,color:#0f172a
+    style ENT fill:#d1fae5,stroke:#10b981,color:#0f172a
+    style CONT fill:#ede9fe,stroke:#8b5cf6,color:#0f172a
+    style DRE fill:#fef3c7,stroke:#f59e0b,color:#0f172a
