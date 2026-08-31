@@ -275,8 +275,10 @@ CREATE INDEX IF NOT EXISTS ix_intermediate_quality_results_run
 
 def generate_models_sql() -> str:
     return r"""
+DROP MATERIALIZED VIEW IF EXISTS intermediate.int_performance_driver_impacts;
 DROP MATERIALIZED VIEW IF EXISTS intermediate.int_performance_drivers;
 DROP MATERIALIZED VIEW IF EXISTS intermediate.int_financial_allocated;
+DROP MATERIALIZED VIEW IF EXISTS intermediate.int_budget_allocated;
 DROP MATERIALIZED VIEW IF EXISTS intermediate.int_reconciliation_logistics_accounting;
 DROP MATERIALIZED VIEW IF EXISTS intermediate.int_reconciliation_commercial_accounting;
 DROP MATERIALIZED VIEW IF EXISTS intermediate.int_dre_budget;
@@ -448,6 +450,129 @@ CREATE INDEX ix_int_dre_budget_reporting
 
 COMMENT ON MATERIALIZED VIEW intermediate.int_dre_budget IS
     'Budget normalizado no mesmo grao dimensional e na mesma regra de sinal do Actual.';
+
+CREATE MATERIALIZED VIEW intermediate.int_budget_allocated AS
+WITH branch_driver AS (
+    SELECT
+        periods.competence_month,
+        periods.budget_version_id,
+        branch.branch_id,
+        COALESCE(revenue.revenue_amount, 0)::NUMERIC AS revenue_amount,
+        COALESCE(headcount.headcount, 0)::NUMERIC AS headcount,
+        SUM(COALESCE(revenue.revenue_amount, 0))
+            OVER (PARTITION BY periods.competence_month, periods.budget_version_id)::NUMERIC AS total_revenue,
+        SUM(COALESCE(headcount.headcount, 0))
+            OVER (PARTITION BY periods.competence_month, periods.budget_version_id)::NUMERIC AS total_headcount
+    FROM (SELECT DISTINCT competence_month, budget_version_id FROM intermediate.int_dre_budget) periods
+    CROSS JOIN (SELECT branch_id FROM staging.stg_branches WHERE is_active) branch
+    LEFT JOIN (
+        SELECT competence_month, budget_version_id, branch_id, SUM(budget_amount) AS revenue_amount
+        FROM intermediate.int_dre_budget
+        WHERE dre_line_id = '01' AND branch_id IS NOT NULL
+        GROUP BY competence_month, budget_version_id, branch_id
+    ) revenue USING (competence_month, budget_version_id, branch_id)
+    LEFT JOIN (
+        SELECT to_date(period || '-01', 'YYYY-MM-DD') AS competence_month,
+               budget_version_id, branch_id, SUM(planned_headcount)::NUMERIC AS headcount
+        FROM staging.stg_budget_headcount
+        WHERE branch_id IS NOT NULL
+        GROUP BY to_date(period || '-01', 'YYYY-MM-DD'), budget_version_id, branch_id
+    ) headcount USING (competence_month, budget_version_id, branch_id)
+), eligible AS (
+    SELECT budget.*
+    FROM intermediate.int_dre_budget budget
+    JOIN staging.stg_cost_centers cost_center USING (cost_center_id)
+    WHERE cost_center.management_scope = 'CORPORATE'
+      AND cost_center.allocation_eligible
+      AND EXISTS (
+          SELECT 1
+          FROM intermediate.int_allocation_rules rule
+          WHERE rule.account_code = budget.account_code
+            AND rule.is_active
+            AND budget.competence_month >= rule.valid_from
+            AND budget.competence_month <= COALESCE(rule.valid_to, 'infinity'::DATE)
+      )
+), allocated AS (
+    SELECT
+        budget.dre_budget_id,
+        budget.budget_version_id,
+        budget.budget_version_code,
+        budget.scenario,
+        budget.competence_month,
+        budget.company_id,
+        budget.branch_id AS source_branch_id,
+        rule.target_branch_id AS allocated_branch_id,
+        budget.cost_center_id AS source_cost_center_id,
+        budget.cost_center_id AS allocated_cost_center_id,
+        budget.account_code,
+        budget.dre_line_id,
+        budget.management_group,
+        budget.performance_nature,
+        budget.budget_amount AS source_budget_amount,
+        rule.allocation_rule_id,
+        rule.driver_type,
+        CASE rule.driver_type
+            WHEN 'REVENUE' THEN COALESCE(driver.revenue_amount / NULLIF(driver.total_revenue, 0), rule.fixed_percentage)
+            WHEN 'HEADCOUNT' THEN COALESCE(driver.headcount / NULLIF(driver.total_headcount, 0), rule.fixed_percentage)
+            WHEN 'FIXED_PERCENTAGE' THEN rule.fixed_percentage
+        END::NUMERIC(24,12) AS allocation_weight,
+        (budget.budget_amount * CASE rule.driver_type
+            WHEN 'REVENUE' THEN COALESCE(driver.revenue_amount / NULLIF(driver.total_revenue, 0), rule.fixed_percentage)
+            WHEN 'HEADCOUNT' THEN COALESCE(driver.headcount / NULLIF(driver.total_headcount, 0), rule.fixed_percentage)
+            WHEN 'FIXED_PERCENTAGE' THEN rule.fixed_percentage
+        END)::NUMERIC(30,12) AS allocated_budget_amount,
+        'ALLOCATED'::VARCHAR(30) AS allocation_status
+    FROM eligible budget
+    JOIN intermediate.int_allocation_rules rule
+      ON rule.account_code = budget.account_code
+     AND rule.is_active
+     AND budget.competence_month >= rule.valid_from
+     AND budget.competence_month <= COALESCE(rule.valid_to, 'infinity'::DATE)
+    JOIN branch_driver driver
+      ON driver.competence_month = budget.competence_month
+     AND driver.budget_version_id = budget.budget_version_id
+     AND driver.branch_id = rule.target_branch_id
+), direct AS (
+    SELECT
+        budget.dre_budget_id,
+        budget.budget_version_id,
+        budget.budget_version_code,
+        budget.scenario,
+        budget.competence_month,
+        budget.company_id,
+        budget.branch_id AS source_branch_id,
+        COALESCE(budget.branch_id, cost_center.branch_id) AS allocated_branch_id,
+        budget.cost_center_id AS source_cost_center_id,
+        budget.cost_center_id AS allocated_cost_center_id,
+        budget.account_code,
+        budget.dre_line_id,
+        budget.management_group,
+        budget.performance_nature,
+        budget.budget_amount AS source_budget_amount,
+        NULL::BIGINT AS allocation_rule_id,
+        NULL::VARCHAR(30) AS driver_type,
+        1::NUMERIC(24,12) AS allocation_weight,
+        budget.budget_amount::NUMERIC(30,12) AS allocated_budget_amount,
+        CASE
+            WHEN cost_center.management_scope = 'CORPORATE' AND cost_center.allocation_eligible
+                THEN 'RULE_NOT_APPLICABLE'
+            ELSE 'DIRECT'
+        END::VARCHAR(30) AS allocation_status
+    FROM intermediate.int_dre_budget budget
+    LEFT JOIN staging.stg_cost_centers cost_center USING (cost_center_id)
+    WHERE NOT EXISTS (SELECT 1 FROM eligible WHERE eligible.dre_budget_id = budget.dre_budget_id)
+)
+SELECT * FROM direct
+UNION ALL
+SELECT * FROM allocated;
+
+CREATE UNIQUE INDEX ux_int_budget_allocated_grain
+    ON intermediate.int_budget_allocated (dre_budget_id, COALESCE(allocated_branch_id, 0));
+CREATE INDEX ix_int_budget_allocated_reporting
+    ON intermediate.int_budget_allocated (competence_month, allocated_branch_id, dre_line_id);
+
+COMMENT ON MATERIALIZED VIEW intermediate.int_budget_allocated IS
+    'Budget corporativo redistribuido por filial com as mesmas regras de int_allocation_rules; REVENUE e HEADCOUNT usam bases orcadas (int_dre_budget e stg_budget_headcount), nao valores realizados. Total consolidado preservado.';
 
 CREATE MATERIALIZED VIEW intermediate.int_reconciliation_commercial_accounting AS
 WITH accounting AS (
@@ -783,6 +908,27 @@ WITH actual_commercial AS (
      AND assumption.branch_id = commercial.branch_id
     GROUP BY commercial.competence_month, commercial.company_id, commercial.branch_id,
              assumption.budget_version_id
+), actual_financial_driver AS (
+    SELECT
+        competence_month,
+        company_id,
+        branch_id,
+        dre_line_id,
+        SUM(actual_amount)::NUMERIC(24,8) AS actual_value
+    FROM intermediate.int_dre_actual
+    WHERE dre_line_id IN ('04', '06', '08', '09', '11')
+    GROUP BY competence_month, company_id, branch_id, dre_line_id
+), budget_financial_driver AS (
+    SELECT
+        competence_month,
+        company_id,
+        branch_id,
+        budget_version_id,
+        dre_line_id,
+        SUM(budget_amount)::NUMERIC(24,8) AS budget_value
+    FROM intermediate.int_dre_budget
+    WHERE dre_line_id IN ('04', '06', '08', '09', '11')
+    GROUP BY competence_month, company_id, branch_id, budget_version_id, dre_line_id
 ), financial_driver AS (
     SELECT
         COALESCE(actual.competence_month, budget.competence_month) AS competence_month,
@@ -799,21 +945,14 @@ WITH actual_commercial AS (
         END::VARCHAR AS driver_name,
         COALESCE(actual.dre_line_id, budget.dre_line_id) AS dre_line_id,
         'CURRENCY'::VARCHAR AS comparison_basis,
-        SUM(actual.actual_amount)::NUMERIC(24,8) AS actual_value,
-        SUM(budget.budget_amount)::NUMERIC(24,8) AS budget_value
-    FROM intermediate.int_dre_actual actual
-    FULL OUTER JOIN intermediate.int_dre_budget budget
+        actual.actual_value,
+        budget.budget_value
+    FROM actual_financial_driver actual
+    FULL OUTER JOIN budget_financial_driver budget
       ON budget.competence_month = actual.competence_month
      AND budget.company_id = actual.company_id
      AND budget.branch_id IS NOT DISTINCT FROM actual.branch_id
-     AND budget.cost_center_id IS NOT DISTINCT FROM actual.cost_center_id
-     AND budget.account_code = actual.account_code
      AND budget.dre_line_id = actual.dre_line_id
-    WHERE COALESCE(actual.dre_line_id, budget.dre_line_id) IN ('04', '06', '08', '09', '11')
-    GROUP BY COALESCE(actual.competence_month, budget.competence_month),
-             COALESCE(actual.company_id, budget.company_id),
-             COALESCE(actual.branch_id, budget.branch_id), budget.budget_version_id,
-             COALESCE(actual.dre_line_id, budget.dre_line_id)
 ), combined AS (
     SELECT * FROM volume_price_discount
     UNION ALL SELECT * FROM mix
@@ -839,9 +978,16 @@ SELECT
         ELSE ((actual_value - budget_value) / ABS(budget_value))::NUMERIC(24,8)
     END AS variance_pct,
     CASE
+        WHEN driver_name IN ('VOLUME', 'PRICE') THEN 'HIGHER_IS_BETTER'
+        WHEN driver_name IN ('DISCOUNT', 'LOGISTICS') THEN 'LOWER_IS_BETTER'
+        WHEN driver_name = 'MIX' THEN 'CONTEXTUAL'
+        ELSE 'HIGHER_SIGNED_AMOUNT_IS_BETTER'
+    END::VARCHAR(40) AS favorability_rule,
+    CASE
         WHEN actual_value IS NULL OR budget_value IS NULL THEN 'NOT_COMPARABLE'
-        WHEN driver_name IN ('CMV', 'OPEX', 'LOGISTICS', 'DISCOUNT') AND actual_value >= budget_value THEN 'UNFAVORABLE'
-        WHEN driver_name IN ('CMV', 'OPEX', 'LOGISTICS', 'DISCOUNT') THEN 'FAVORABLE'
+        WHEN driver_name = 'MIX' THEN 'CONTEXTUAL'
+        WHEN driver_name IN ('DISCOUNT', 'LOGISTICS') AND actual_value <= budget_value THEN 'FAVORABLE'
+        WHEN driver_name IN ('DISCOUNT', 'LOGISTICS') THEN 'UNFAVORABLE'
         WHEN actual_value >= budget_value THEN 'FAVORABLE'
         ELSE 'UNFAVORABLE'
     END::VARCHAR(30) AS favorability
@@ -854,5 +1000,233 @@ CREATE INDEX ix_int_performance_drivers_reporting
     ON intermediate.int_performance_drivers (competence_month, driver_name, branch_id);
 
 COMMENT ON MATERIALIZED VIEW intermediate.int_performance_drivers IS
-    'Drivers em formato longo para explicar Budget versus Actual: volume, preco, desconto, mix, CMV, logistica, OPEX e financeiro.';
+    'Metricas comparativas dos drivers; valores financeiros usam sinal gerencial e MIX possui favorabilidade contextual.';
+
+CREATE MATERIALIZED VIEW intermediate.int_performance_driver_impacts AS
+WITH actual_result AS (
+    SELECT
+        competence_month,
+        company_id,
+        branch_id,
+        SUM(actual_amount) FILTER (
+            WHERE dre_line_id IN ('01', '02', '04', '06', '07', '08', '09')
+        )::NUMERIC(24,2) AS operational_actual_amount,
+        SUM(actual_amount) FILTER (WHERE dre_line_id IN ('01', '02'))::NUMERIC(24,2)
+            AS net_revenue_actual_amount,
+        SUM(actual_amount) FILTER (WHERE dre_line_id = '04')::NUMERIC(24,2) AS cmv_actual_amount,
+        SUM(actual_amount) FILTER (WHERE dre_line_id = '07')::NUMERIC(24,2) AS logistics_actual_amount,
+        SUM(actual_amount) FILTER (WHERE dre_line_id IN ('06', '08', '09'))::NUMERIC(24,2)
+            AS opex_actual_amount,
+        SUM(actual_amount) FILTER (WHERE dre_line_id = '11')::NUMERIC(24,2) AS financial_actual_amount
+    FROM intermediate.int_dre_actual
+    GROUP BY competence_month, company_id, branch_id
+), budget_result AS (
+    SELECT
+        competence_month,
+        company_id,
+        branch_id,
+        budget_version_id,
+        MAX(budget_version_code) AS budget_version_code,
+        MAX(scenario) AS scenario,
+        SUM(budget_amount) FILTER (
+            WHERE dre_line_id IN ('01', '02', '04', '06', '07', '08', '09')
+        )::NUMERIC(24,2) AS operational_budget_amount,
+        SUM(budget_amount) FILTER (WHERE dre_line_id IN ('01', '02'))::NUMERIC(24,2)
+            AS net_revenue_budget_amount,
+        SUM(budget_amount) FILTER (WHERE dre_line_id = '04')::NUMERIC(24,2) AS cmv_budget_amount,
+        SUM(budget_amount) FILTER (WHERE dre_line_id = '07')::NUMERIC(24,2) AS logistics_budget_amount,
+        SUM(budget_amount) FILTER (WHERE dre_line_id IN ('06', '08', '09'))::NUMERIC(24,2)
+            AS opex_budget_amount,
+        SUM(budget_amount) FILTER (WHERE dre_line_id = '11')::NUMERIC(24,2) AS financial_budget_amount
+    FROM intermediate.int_dre_budget
+    GROUP BY competence_month, company_id, branch_id, budget_version_id
+), actual_commercial AS (
+    SELECT
+        date_trunc('month', invoice.competence_date)::DATE AS competence_month,
+        invoice.company_id,
+        invoice.branch_id,
+        SUM(item.billed_qty)::NUMERIC(30,8) AS billed_qty,
+        SUM(item.gross_line_amount)::NUMERIC(30,8) AS gross_revenue,
+        SUM(item.discount_amount)::NUMERIC(30,8) AS discount_amount
+    FROM staging.stg_invoices invoice
+    JOIN staging.stg_invoice_items item USING (invoice_id)
+    WHERE invoice.invoice_status = 'ISSUED' AND item.item_status = 'ISSUED'
+    GROUP BY date_trunc('month', invoice.competence_date)::DATE,
+             invoice.company_id, invoice.branch_id
+), commercial_baseline AS (
+    SELECT
+        company_id,
+        branch_id,
+        MAX(billed_qty) FILTER (WHERE competence_month = DATE '2024-01-01') AS base_volume,
+        MAX(gross_revenue / NULLIF(billed_qty, 0))
+            FILTER (WHERE competence_month = DATE '2024-01-01') AS base_price
+    FROM actual_commercial
+    GROUP BY company_id, branch_id
+), assumption AS (
+    SELECT
+        to_date(period || '-01', 'YYYY-MM-DD') AS competence_month,
+        branch_id,
+        budget_version_id,
+        planned_gross_product_revenue,
+        planned_volume_index,
+        planned_price_index,
+        planned_discount_pct
+    FROM staging.stg_budget_assumptions
+), bridge_grain AS (
+    SELECT
+        actual.competence_month,
+        actual.company_id,
+        actual.branch_id,
+        budget.budget_version_id,
+        budget.budget_version_code,
+        budget.scenario,
+        COALESCE(actual.operational_actual_amount, 0)::NUMERIC(24,2) AS operational_actual_amount,
+        COALESCE(budget.operational_budget_amount, 0)::NUMERIC(24,2) AS operational_budget_amount,
+        COALESCE(actual.net_revenue_actual_amount, 0)::NUMERIC(24,2) AS net_revenue_actual_amount,
+        COALESCE(budget.net_revenue_budget_amount, 0)::NUMERIC(24,2) AS net_revenue_budget_amount,
+        COALESCE(actual.cmv_actual_amount, 0)::NUMERIC(24,2) AS cmv_actual_amount,
+        COALESCE(budget.cmv_budget_amount, 0)::NUMERIC(24,2) AS cmv_budget_amount,
+        COALESCE(actual.logistics_actual_amount, 0)::NUMERIC(24,2) AS logistics_actual_amount,
+        COALESCE(budget.logistics_budget_amount, 0)::NUMERIC(24,2) AS logistics_budget_amount,
+        COALESCE(actual.opex_actual_amount, 0)::NUMERIC(24,2) AS opex_actual_amount,
+        COALESCE(budget.opex_budget_amount, 0)::NUMERIC(24,2) AS opex_budget_amount,
+        COALESCE(actual.financial_actual_amount, 0)::NUMERIC(24,2) AS financial_actual_amount,
+        COALESCE(budget.financial_budget_amount, 0)::NUMERIC(24,2) AS financial_budget_amount,
+        commercial.billed_qty::NUMERIC(30,8) AS actual_volume_qty,
+        (assumption.planned_gross_product_revenue
+            / NULLIF(baseline.base_price * assumption.planned_price_index, 0))::NUMERIC(30,8)
+            AS budget_volume_qty,
+        (commercial.gross_revenue / NULLIF(commercial.billed_qty, 0))::NUMERIC(24,8)
+            AS actual_unit_price,
+        (baseline.base_price * assumption.planned_price_index)::NUMERIC(24,8)
+            AS budget_unit_price,
+        (commercial.billed_qty / NULLIF(baseline.base_volume, 0))::NUMERIC(24,8)
+            AS actual_volume_index,
+        assumption.planned_volume_index::NUMERIC(24,8) AS budget_volume_index,
+        ((commercial.gross_revenue / NULLIF(commercial.billed_qty, 0))
+            / NULLIF(baseline.base_price, 0))::NUMERIC(24,8) AS actual_price_index,
+        assumption.planned_price_index::NUMERIC(24,8) AS budget_price_index,
+        (commercial.discount_amount / NULLIF(commercial.gross_revenue, 0))::NUMERIC(24,8)
+            AS actual_discount_pct,
+        assumption.planned_discount_pct::NUMERIC(24,8) AS budget_discount_pct
+    FROM actual_result actual
+    JOIN budget_result budget
+      ON budget.competence_month = actual.competence_month
+     AND budget.company_id = actual.company_id
+     AND budget.branch_id IS NOT DISTINCT FROM actual.branch_id
+    LEFT JOIN actual_commercial commercial
+      ON commercial.competence_month = actual.competence_month
+     AND commercial.company_id = actual.company_id
+     AND commercial.branch_id = actual.branch_id
+    LEFT JOIN commercial_baseline baseline
+      ON baseline.company_id = actual.company_id
+     AND baseline.branch_id = actual.branch_id
+    LEFT JOIN assumption
+      ON assumption.competence_month = actual.competence_month
+     AND assumption.branch_id = actual.branch_id
+     AND assumption.budget_version_id = budget.budget_version_id
+), factors AS (
+    SELECT bridge.*,
+        CASE
+            WHEN actual_volume_qty IS NULL OR budget_volume_qty IS NULL OR budget_volume_qty = 0 THEN 1
+            ELSE actual_volume_qty / budget_volume_qty
+        END::NUMERIC(30,12) AS volume_factor,
+        CASE
+            WHEN actual_unit_price IS NULL OR budget_unit_price IS NULL OR budget_unit_price = 0 THEN 1
+            ELSE actual_unit_price / budget_unit_price
+        END::NUMERIC(30,12) AS price_factor,
+        CASE
+            WHEN actual_discount_pct IS NULL OR budget_discount_pct IS NULL OR budget_discount_pct = 1 THEN 1
+            ELSE (1 - actual_discount_pct) / (1 - budget_discount_pct)
+        END::NUMERIC(30,12) AS discount_factor
+    FROM bridge_grain bridge
+), calculated AS (
+    SELECT factors.*,
+        ROUND(net_revenue_budget_amount * (volume_factor - 1), 2)::NUMERIC(24,2)
+            AS volume_impact,
+        ROUND(net_revenue_budget_amount * volume_factor * (price_factor - 1), 2)::NUMERIC(24,2)
+            AS price_impact,
+        ROUND(net_revenue_budget_amount * volume_factor * price_factor * (discount_factor - 1), 2)::NUMERIC(24,2)
+            AS discount_impact
+    FROM factors
+), impacts AS (
+    SELECT calculated.*,
+        (net_revenue_actual_amount - net_revenue_budget_amount
+            - volume_impact - price_impact - discount_impact)::NUMERIC(24,2) AS mix_impact,
+        (cmv_actual_amount - cmv_budget_amount)::NUMERIC(24,2) AS cmv_impact,
+        (logistics_actual_amount - logistics_budget_amount)::NUMERIC(24,2) AS logistics_impact,
+        (opex_actual_amount - opex_budget_amount)::NUMERIC(24,2) AS opex_impact,
+        (financial_actual_amount - financial_budget_amount)::NUMERIC(24,2) AS financial_impact
+    FROM calculated
+), driver_rows AS (
+    SELECT impacts.*, driver.*
+    FROM impacts
+    CROSS JOIN LATERAL (
+        VALUES
+            ('VOLUME'::VARCHAR(30), 1::SMALLINT, 'OPERATIONAL'::VARCHAR(20), TRUE,
+             'SEQUENTIAL_VOLUME'::VARCHAR(60), actual_volume_qty, budget_volume_qty, volume_impact),
+            ('PRICE', 2, 'OPERATIONAL', TRUE,
+             'SEQUENTIAL_PRICE_AFTER_VOLUME', actual_unit_price, budget_unit_price, price_impact),
+            ('DISCOUNT', 3, 'OPERATIONAL', TRUE,
+             'SEQUENTIAL_DISCOUNT_AFTER_PRICE', actual_discount_pct, budget_discount_pct, discount_impact),
+            ('MIX', 4, 'OPERATIONAL', TRUE,
+             'SEQUENTIAL_MIX_AFTER_DISCOUNT', NULL::NUMERIC, NULL::NUMERIC, mix_impact),
+            ('CMV', 5, 'OPERATIONAL', TRUE,
+             'DIRECT_COST_VARIANCE', cmv_actual_amount, cmv_budget_amount, cmv_impact),
+            ('LOGISTICS', 6, 'OPERATIONAL', TRUE,
+             'DIRECT_COST_VARIANCE', logistics_actual_amount, logistics_budget_amount, logistics_impact),
+            ('OPEX', 7, 'OPERATIONAL', TRUE,
+             'DIRECT_OPEX_VARIANCE', opex_actual_amount, opex_budget_amount, opex_impact),
+            ('FINANCIAL', 8, 'PRE_TAX_ONLY', FALSE,
+             'DIRECT_FINANCIAL_VARIANCE', financial_actual_amount, financial_budget_amount, financial_impact),
+            ('RESIDUAL', 9, 'OPERATIONAL', TRUE,
+             'RESIDUAL_RECONCILIATION', NULL::NUMERIC, NULL::NUMERIC,
+             (operational_actual_amount - operational_budget_amount
+                - volume_impact - price_impact - discount_impact - mix_impact
+                - cmv_impact - logistics_impact - opex_impact)::NUMERIC(24,2))
+    ) driver(
+        driver_name, driver_order, bridge_scope, is_operational_bridge,
+        impact_method, driver_actual_value, driver_budget_value, impact_amount
+    )
+)
+SELECT
+    md5(concat_ws('|', competence_month, company_id, COALESCE(branch_id, 0),
+        budget_version_id, driver_name)) AS driver_impact_id,
+    competence_month,
+    company_id,
+    branch_id,
+    budget_version_id,
+    budget_version_code,
+    scenario,
+    driver_name,
+    driver_order,
+    bridge_scope,
+    is_operational_bridge,
+    impact_method,
+    driver_actual_value::NUMERIC(24,8),
+    driver_budget_value::NUMERIC(24,8),
+    impact_amount::NUMERIC(24,2),
+    ABS(impact_amount)::NUMERIC(24,2) AS impact_amount_abs,
+    CASE
+        WHEN impact_amount > 0 THEN 'FAVORABLE'
+        WHEN impact_amount < 0 THEN 'UNFAVORABLE'
+        ELSE 'NEUTRAL'
+    END::VARCHAR(20) AS favorability,
+    operational_actual_amount,
+    operational_budget_amount,
+    (operational_actual_amount - operational_budget_amount)::NUMERIC(24,2)
+        AS operational_gap_amount
+FROM driver_rows;
+
+CREATE UNIQUE INDEX ux_int_performance_driver_impacts_grain
+    ON intermediate.int_performance_driver_impacts (
+        competence_month, company_id, COALESCE(branch_id, 0), budget_version_id, driver_name
+    );
+CREATE INDEX ix_int_performance_driver_impacts_reporting
+    ON intermediate.int_performance_driver_impacts (
+        competence_month, budget_version_id, driver_order, branch_id
+    );
+
+COMMENT ON MATERIALIZED VIEW intermediate.int_performance_driver_impacts IS
+    'Bridge Budget para Actual no Resultado Operacional. VOLUME, PRICE e DISCOUNT sao sequenciais; MIX fecha a composicao da receita; RESIDUAL aceita somente arredondamento.';
 """.strip() + "\n"

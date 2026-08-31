@@ -19,7 +19,7 @@
   <circle cx="990" cy="55" r="3" fill="#1e2a4a"/>
 
   <text x="540" y="130" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" fill="#16233f">Arquitetura do Pipeline</text>
-  <text x="540" y="168" text-anchor="middle" font-size="21" fill="#5b6b85">Da origem ao Power BI, em cinco camadas no PostgreSQL</text>
+  <text x="540" y="168" text-anchor="middle" font-size="21" fill="#5b6b85">Da origem ao Power BI, com dados estruturados em camadas no PostgreSQL</text>
 
   <!-- CONTROL / QUALITY badge -->
   <g filter="url(#cardShadow)">

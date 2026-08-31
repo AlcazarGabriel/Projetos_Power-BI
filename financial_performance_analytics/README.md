@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Pipeline-RAW%20%E2%86%92%20STAGING%20%E2%86%92%20INTERMEDIATE%20%E2%86%92%20MARTS-0f766e)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Analytics-336791)
 ![Data Quality](https://img.shields.io/badge/Data%20Quality-PASS-16a34a)
-![Power BI](https://img.shields.io/badge/Power%20BI-Pr%C3%B3xima%20etapa-F2C811)
+![Power BI](https://img.shields.io/badge/Power%20BI-Executive%20Page%20pronta-F2C811)
 
 <p align="center">
   <img src="docs/Arquitetura/tecnico/architecture_overview.png" alt="Arquitetura do Pipeline: ERP para RAW, STAGING, INTERMEDIATE, MARTS, Semantic Model e Power BI" width="900">
@@ -37,7 +37,17 @@ Semantic Model
 Power BI
 ```
 
-O pipeline financeiro e o modelo dimensional em PostgreSQL estão concluídos. A próxima etapa é a construção do modelo semântico, medidas DAX e dashboards no Power BI.
+O pipeline financeiro e o modelo dimensional em PostgreSQL estão concluídos. A primeira página do Power BI, Executive Financial Performance, também já está construída, com modelo semântico, medidas DAX e diagnósticos interativos. DRE Gerencial e Performance Drivers são as próximas páginas.
+
+### Status do projeto
+
+- pipeline de ingestão e transformação concluído;
+- arquitetura em camadas validada e auditável;
+- DRE Gerencial e Budget conformados;
+- reconciliações comercial, logística e contábil implementadas;
+- drivers de performance calculados e reconciliados;
+- modelo semântico e medidas DAX da página Executive concluídos;
+- Power BI: página Executive Financial Performance pronta; DRE Gerencial e Performance Drivers em construção.
 
 ---
 
@@ -69,13 +79,15 @@ Os dados de **Actual abrangem jan/2024 a jul/2026**, enquanto o **Budget cobre 2
 1. Como Receita Líquida, Lucro Bruto, Resultado Operacional e Margem Operacional estão evoluindo ao longo do tempo?
 2. O crescimento de receita está sendo acompanhado pelo crescimento do resultado?
 3. Qual é o desvio entre **Actual e Budget** e em quais linhas da DRE ele está concentrado?
-4. Quais fatores explicam o gap de performance: **volume, preço, desconto, mix, CMV, logística, OPEX ou resultado financeiro**?
+4. Quais fatores explicam o desvio operacional: **volume, preço, desconto, mix, CMV, logística, OPEX ou residual**?
 5. Quais filiais, clientes, produtos ou categorias mais contribuem positiva ou negativamente para o resultado?
 6. O aumento do custo logístico está relacionado à expansão regional, distância, peso, transportadoras ou maior frequência de entregas?
 7. A política de descontos está pressionando receita líquida e margem em segmentos específicos?
 8. As despesas administrativas estão crescendo acima ou abaixo da receita?
 9. O resultado apresentado na DRE pode ser rastreado até os eventos comerciais, logísticos e contábeis de origem?
-10. Quais poucos drivers concentram a maior parte do desvio desfavorável em relação ao Budget?
+10. Quais drivers concentram a maior parte das pressões desfavoráveis em relação ao Budget?
+
+O **resultado financeiro** é tratado como análise complementar e permanece fora do bridge operacional de drivers.
 
 ---
 
@@ -135,13 +147,14 @@ Entre as principais regras implementadas estão:
 - conservação integral de valor antes e depois dos rateios;
 - conciliação comercial × contabilidade;
 - conciliação logística × contabilidade;
-- drivers de volume, preço, desconto, mix, CMV, logística, OPEX e financeiro.
+- drivers operacionais de volume, preço, desconto, mix, CMV, logística, OPEX e residual;
+- resultado financeiro tratado separadamente do bridge operacional.
 
 ---
 
 ## Modelo dimensional MARTS
 
-A camada de consumo possui **4 tabelas fato e 9 dimensões conformadas**, materializadas no PostgreSQL para reduzir o custo de processamento no consumo analítico.
+A camada de consumo possui **7 tabelas fato e 11 dimensões conformadas**, materializadas no PostgreSQL para reduzir o custo de processamento no consumo analítico.
 
 <p align="center">
   <img src="docs/Arquitetura/tecnico/marts_dimensional_model.png" alt="Modelo Dimensional MARTS" width="900">
@@ -155,12 +168,15 @@ A camada de consumo possui **4 tabelas fato e 9 dimensões conformadas**, materi
 | `marts.fct_budget` | mês × conta × dimensões | Budget e variações |
 | `marts.fct_sales` | item de nota fiscal | receita, preço, desconto, mix e volume |
 | `marts.fct_deliveries` | entrega | frete, distância, peso, SLA e subsídio |
+| `marts.fct_delivery_budget` | versão × mês × filial | Budget de entregas e comparação logística |
+| `marts.fct_reconciliation` | evento conciliado entre módulos | rastreabilidade e conciliação comercial/logística × contabilidade |
+| `marts.fct_performance_drivers` | mês × filial/Corporate × versão de Budget × driver | bridge operacional e explicação dos desvios |
 
 ### Dimensões
 
-`dim_date` · `dim_branch` · `dim_account` · `dim_dre` · `dim_cost_center` · `dim_customer` · `dim_product` · `dim_carrier` · `dim_sales_representative`
+`dim_date` · `dim_branch` · `dim_account` · `dim_dre` · `dim_cost_center` · `dim_customer` · `dim_product` · `dim_carrier` · `dim_sales_representative` · `dim_budget_version` · `dim_driver`
 
-Membros técnicos `UNKNOWN` foram implementados para preservar integridade referencial e evitar chaves nulas nas fatos.
+Membros técnicos `UNKNOWN` foram implementados para preservar integridade referencial e evitar chaves nulas nas fatos. O contexto `CORPORATE` (rateio corporativo) é tratado separadamente na dimensão de filial.
 
 <details>
 <summary><strong>ERD completo por camada</strong> (todas as colunas, exportado do DBeaver)</summary>
@@ -195,9 +211,12 @@ Diagramas de referência com todas as colunas, tipos, PKs e FKs, úteis para con
 | Fato | Registros |
 |---|---:|
 | `fct_financial_entries` | 1.389.672 |
-| `fct_budget` | 8.676 |
+| `fct_budget` | 26.244 |
 | `fct_sales` | 615.602 |
 | `fct_deliveries` | 256.857 |
+| `fct_delivery_budget` | 180 |
+| `fct_reconciliation` | 303.522 |
+| `fct_performance_drivers` | 1.674 |
 
 ---
 
@@ -214,9 +233,12 @@ Qualidade de dados é tratada como parte do pipeline e não como uma validação
 | Camada | Resultado |
 |---|---:|
 | **RAW** | PASS |
-| **STAGING** | **251 / 251 PASS** |
-| **INTERMEDIATE** | **18 / 18 PASS** |
-| **MARTS** | **33 / 33 PASS** |
+| **STAGING** | **250 / 251 PASS** |
+| **INTERMEDIATE** | **28 / 28 PASS** |
+| **MARTS** | **48 / 48 PASS** |
+| **Budget de Entregas** (extensão) | **10 / 10 PASS** |
+
+> O único teste não-PASS em STAGING (`expected_view_set`) é uma checagem estrutural do pipeline principal que ainda não reconhece a view `stg_budget_delivery_plan`, criada pelo módulo de extensão `fpa_delivery_budget`. Essa view tem sua própria suíte de validação (linha "Budget de Entregas" acima, 10/10 PASS); não é uma falha de qualidade de dado.
 
 Também foram validados:
 
@@ -240,7 +262,7 @@ Também foram validados:
 - **Docker**: execução local reproduzível do ambiente;
 - **DBeaver**: administração, consultas e inspeção dos modelos;
 - **Git / GitHub**: versionamento e documentação;
-- **Power BI**: modelo semântico, DAX e visualização na próxima etapa.
+- **Power BI**: modelo semântico, medidas DAX e visualização analítica.
 
 ---
 
@@ -258,7 +280,8 @@ docs/
 ├── guias/                    dossiê e documentação física do banco
 └── Arquitetura/
     ├── tecnico/              diagramas completos para documentação/GitHub
-    └── apresentacao/         diagramas 1080×1350 para LinkedIn/portfólio
+    ├── apresentacao/         diagramas 1080×1350 para LinkedIn/portfólio
+    └── power-bi/             prints das páginas do relatório
 ```
 
 > Consulte [`database/README.md`](database/README.md) para detalhes de implementação, comandos de execução e validação local.
@@ -272,7 +295,7 @@ docs/
 | `architecture_overview` | Arquitetura completa da origem ao Power BI |
 | `layer_responsibilities` | Responsabilidade de RAW, STAGING, INTERMEDIATE, MARTS e CONTROL |
 | `business_flow` | Fluxo Cliente → Pedido → Faturamento → Logística/Contabilidade → DRE |
-| `marts_dimensional_model` | Modelo dimensional com 4 fatos e 9 dimensões |
+| `marts_dimensional_model` | Modelo dimensional com 7 fatos e 11 dimensões |
 | `data_quality_governance` | Auditoria, testes, reconciliações e quality gate |
 
 Cada diagrama acima tem uma versão técnica (horizontal, em `docs/Arquitetura/tecnico/`) e uma versão de apresentação (vertical 1080×1350, em `docs/Arquitetura/apresentacao/`), pronta para carrossel no LinkedIn e portfólio:
@@ -295,17 +318,32 @@ A carga é executada localmente pelos scripts do projeto, preservando controles 
 
 ---
 
-## Próxima etapa: Power BI
+## Power BI
 
-Com a infraestrutura de dados concluída, o Power BI deverá consumir prioritariamente a camada `marts`.
+O Power BI consome a camada `marts` e é orientado a três perguntas analíticas principais:
 
-O relatório será orientado a três perguntas analíticas principais:
+1. **Executive Financial Performance**: como receita, resultado e margens estão evoluindo? *(pronta)*
+2. **DRE Gerencial**: onde estão os principais desvios entre Actual e Budget? *(próxima página)*
+3. **Performance Drivers**: quais fatores explicam esses desvios e onde agir? *(próxima página)*
 
-1. **Executive Financial Performance**: como receita, resultado e margens estão evoluindo?
-2. **DRE Gerencial**: onde estão os principais desvios entre Actual e Budget?
-3. **Performance Drivers**: quais fatores explicam esses desvios e onde agir?
+O modelo semântico é enxuto, com medidas DAX focadas em análise e storytelling, deixando as regras complexas de transformação no PostgreSQL.
 
-A proposta é manter um modelo semântico enxuto e dashboards com poucos indicadores, foco em análise e storytelling, deixando regras complexas de transformação no PostgreSQL.
+<p align="center">
+  <a href="https://app.powerbi.com/view?r=eyJrIjoiN2IxZWIxNzEtYmFlNy00MjMwLWI4MzQtOTM4NDg3NzdjMjJlIiwidCI6IjMxMGJmZTRmLWUyMTQtNDUzZC04ZTM1LWM5YmYzYzM4MWQyMSJ9"><strong>Ver relatório publicado no Power BI →</strong></a>
+</p>
+
+### Executive Financial Performance
+
+Visão executiva com Actual vs Budget, evolução mensal, desvio por filial, principais drivers de pressão e atingimento de meta. Os cards de KPI usam formatação condicional (verde/vermelho) para margem, variação e crescimento, e os gráficos de desvio têm diagnóstico interativo por clique, mostrando o contexto completo do mês ou da filial selecionada.
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/executive_financial_performance.png" alt="Power BI: Executive Financial Performance, visão executiva com KPIs, evolução mensal e desvio por filial" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/executive_diagnostico_financeiro.png" alt="Power BI: diagnóstico financeiro interativo ao clicar em um mês, mostrando resultado atual vs Budget comparável" width="440">
+  <img src="docs/Arquitetura/power-bi/executive_diagnostico_desvio.png" alt="Power BI: diagnóstico do desvio ao clicar em uma barra, mostrando participação nas pressões desfavoráveis do período" width="440">
+</p>
 
 ---
 
@@ -315,4 +353,4 @@ Mais do que uma visualização financeira, este projeto busca demonstrar capacid
 
 **ingestão → qualidade → SQL → modelagem → regras de negócio → reconciliação → modelo dimensional → analytics**.
 
-O Power BI será a camada de consumo de uma arquitetura já validada, auditável e preparada para análise.
+O Power BI é a camada de consumo de uma arquitetura já validada, auditável e preparada para análise.

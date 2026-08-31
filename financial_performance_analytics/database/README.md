@@ -19,10 +19,17 @@ Implementação completa do pipeline PostgreSQL aprovado no dossiê: RAW, STAGIN
 - Actual e Budget conformados no mesmo grão: competência, empresa, filial, centro de custo, conta e linha DRE.
 - Reconciliações Comercial x Contabilidade e Logística x Contabilidade com classificação explícita.
 - Rateios por `REVENUE`, `HEADCOUNT` e `FIXED_PERCENTAGE`, com conservação de valor validada.
-- Drivers de volume, preço, desconto, mix, CMV, logística, OPEX e financeiro em formato longo.
+- Métricas de drivers com direção de favorabilidade explícita e valores financeiros interpretados pelo sinal gerencial.
+- Bridge sequencial `VOLUME → PRICE → DISCOUNT → MIX → CMV → LOGISTICS → OPEX → RESIDUAL`, fechado contra o Resultado Operacional Actual menos Budget por competência, filial/Corporate e versão.
+- `FINANCIAL` preservado para análise pré-tributos, sem participar do waterfall operacional.
 - Auditoria persistida em `control.intermediate_quality_runs` e `control.intermediate_quality_results`.
-- Nove dimensões conformadas com membro técnico `UNKNOWN`: data, filial, conta, DRE, centro de custo, cliente, produto, transportadora e representante comercial.
-- Quatro fatos materializados para consumo: lançamentos financeiros, Budget, vendas e entregas.
+- Onze dimensões conformadas: data, filial, driver, versão de Budget, conta, DRE, centro de custo, cliente, produto, transportadora e representante comercial.
+- `dim_branch` mantém `0 = UNKNOWN` e o membro governado `-1 = CORPORATE` sem misturar os dois significados.
+- `dim_budget_version` conforma versão, cenário, exercício, vigência e aprovação para filtrar `fct_budget`, `fct_delivery_budget` e `fct_performance_drivers` pelo mesmo `budget_version_id`.
+- Seis fatos materializados para consumo: lançamentos financeiros, Budget, vendas, entregas, reconciliação e impactos de performance.
+- `marts.fct_reconciliation` unifica eventos Comercial e Logística sem perder seus grãos de origem.
+- `marts.fct_performance_drivers` publica nove drivers por mês, filial/Corporate e versão de Budget; residual acima de R$ 0,01 reprova a qualidade.
+- Extensão operacional de Budget com `marts.fct_delivery_budget`, no grão versão x competência x filial.
 - Medidas financeiras rateadas de forma aditiva, evitando duplicação de débito, crédito e valores gerenciais no Power BI.
 - Vendas reconhecidas e canceladas separadas sem apagar os valores físicos recebidos da origem.
 - Integridade estrela, cobertura de datas, grãos e reconciliações financeiras auditadas em `control.marts_quality_*`.
@@ -50,6 +57,9 @@ $env:DATABASE_URL = "postgresql://fpa_admin:change_me_for_non_local_use@localhos
 .venv/Scripts/python -m database.fpa_intermediate.validate
 .venv/Scripts/python -m database.fpa_marts.apply
 .venv/Scripts/python -m database.fpa_marts.validate
+.venv/Scripts/python -m database.fpa_delivery_budget.apply `
+  ../Financial_Performance_Analytics_Delivery_Budget_Extension_v1
+.venv/Scripts/python -m database.fpa_delivery_budget.validate
 ```
 
 Para uma carga piloto em banco vazio, use o primeiro período:
@@ -82,7 +92,7 @@ Também é possível usar uma instância PostgreSQL existente. Defina `DATABASE_
 - `management_amount` torna receitas positivas e custos, deduções e despesas negativas, mantendo débito, crédito e `accounting_amount` originais.
 - Rateios substituem a visão corporativa por parcelas nas filiais-alvo e preservam o total por partida dentro de tolerância financeira de R$ 0,01.
 - Alterações em mapeamentos ou regras exigem reaplicar `database.fpa_intermediate.apply` e executar a validação antes de liberar MARTS.
-- MARTS usa chaves dimensionais não nulas; o valor `0` referencia o membro técnico `UNKNOWN` em cada dimensão.
+- MARTS usa chaves dimensionais não nulas; `0` referencia `UNKNOWN` e, somente em `dim_branch`, `-1` referencia `CORPORATE`.
 - `fct_financial_entries` expande partidas rateadas, mas aplica o peso também aos valores contábeis para manter todas as medidas aditivas.
 - `fct_sales` mantém medidas físicas de origem e medidas analíticas reconhecidas/canceladas em colunas separadas.
 - O Power BI não deve usar RAW ou STAGING como fonte principal; auditoria e drill-through técnico permanecem disponíveis nessas camadas.

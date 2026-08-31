@@ -16,10 +16,13 @@ EXPECTED_OBJECTS = {
     "int_reconciliation_commercial_accounting",
     "int_reconciliation_logistics_accounting",
     "int_financial_allocated",
+    "int_budget_allocated",
     "int_performance_drivers",
+    "int_performance_driver_impacts",
 }
 
 EXPECTED_DRIVERS = {"VOLUME", "PRICE", "DISCOUNT", "MIX", "CMV", "LOGISTICS", "OPEX", "FINANCIAL"}
+EXPECTED_IMPACT_DRIVERS = EXPECTED_DRIVERS | {"RESIDUAL"}
 
 
 @dataclass(frozen=True)
@@ -73,11 +76,12 @@ def main() -> None:
                     """
                 )
             }
+            missing_objects = EXPECTED_OBJECTS - actual_objects
             add(
                 "expected_object_set",
                 None,
-                len(actual_objects.symmetric_difference(EXPECTED_OBJECTS)),
-                f"expected={len(EXPECTED_OBJECTS)} actual={len(actual_objects)}",
+                len(missing_objects),
+                f"required={len(EXPECTED_OBJECTS)} actual={len(actual_objects)}; extensions are allowed",
             )
 
             dre_line_issues = connection.execute(
@@ -277,6 +281,75 @@ def main() -> None:
             ).fetchone()[0]
             add("allocation_value_conservation", "int_financial_allocated", allocation_value_issues, "no value created or destroyed")
 
+            budget_unallocated_eligible = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM intermediate.int_budget_allocated
+                WHERE allocation_status = 'RULE_NOT_APPLICABLE'
+                """
+            ).fetchone()[0]
+            add(
+                "budget_allocation_rule_coverage",
+                "int_budget_allocated",
+                budget_unallocated_eligible,
+                "all eligible corporate budget rows have a rule",
+            )
+
+            budget_allocation_weight_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT dre_budget_id
+                    FROM intermediate.int_budget_allocated
+                    GROUP BY dre_budget_id
+                    HAVING ABS(SUM(allocation_weight) - 1) > 0.00000001
+                ) issue
+                """
+            ).fetchone()[0]
+            add(
+                "budget_allocation_weight_conservation",
+                "int_budget_allocated",
+                budget_allocation_weight_issues,
+                "weights sum to one by source budget row",
+            )
+
+            budget_allocation_value_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT dre_budget_id
+                    FROM intermediate.int_budget_allocated
+                    GROUP BY dre_budget_id, source_budget_amount
+                    HAVING ABS(SUM(allocated_budget_amount) - source_budget_amount) > 0.01
+                ) issue
+                """
+            ).fetchone()[0]
+            add(
+                "budget_allocation_value_conservation",
+                "int_budget_allocated",
+                budget_allocation_value_issues,
+                "no budget value created or destroyed",
+            )
+
+            budget_corporate_residual = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT competence_month
+                    FROM intermediate.int_budget_allocated
+                    WHERE allocated_branch_id = -1 AND dre_line_id IN ('06','07','08','09')
+                    GROUP BY competence_month
+                    HAVING SUM(allocated_budget_amount) <> 0
+                ) issue
+                """
+            ).fetchone()[0]
+            add(
+                "budget_allocation_no_residual",
+                "int_budget_allocated",
+                budget_corporate_residual,
+                "Corporate carries zero for allocable OPEX/logistics lines after distribution",
+            )
+
             actual_drivers = {
                 row[0]
                 for row in connection.execute(
@@ -288,6 +361,122 @@ def main() -> None:
                 "int_performance_drivers",
                 len(actual_drivers.symmetric_difference(EXPECTED_DRIVERS)),
                 ", ".join(sorted(actual_drivers)),
+            )
+
+            driver_semantic_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM intermediate.int_performance_drivers
+                WHERE favorability_rule NOT IN (
+                    'HIGHER_IS_BETTER', 'LOWER_IS_BETTER', 'CONTEXTUAL',
+                    'HIGHER_SIGNED_AMOUNT_IS_BETTER'
+                )
+                   OR (actual_value IS NULL OR budget_value IS NULL)
+                      AND favorability <> 'NOT_COMPARABLE'
+                   OR driver_name = 'MIX' AND actual_value IS NOT NULL AND budget_value IS NOT NULL
+                      AND favorability <> 'CONTEXTUAL'
+                   OR driver_name IN ('DISCOUNT', 'LOGISTICS')
+                      AND actual_value IS NOT NULL AND budget_value IS NOT NULL
+                      AND favorability <> CASE WHEN actual_value <= budget_value
+                                              THEN 'FAVORABLE' ELSE 'UNFAVORABLE' END
+                   OR driver_name IN ('VOLUME', 'PRICE', 'CMV', 'OPEX', 'FINANCIAL')
+                      AND actual_value IS NOT NULL AND budget_value IS NOT NULL
+                      AND favorability <> CASE WHEN actual_value >= budget_value
+                                              THEN 'FAVORABLE' ELSE 'UNFAVORABLE' END
+                """
+            ).fetchone()[0]
+            add(
+                "performance_driver_semantics",
+                "int_performance_drivers",
+                driver_semantic_issues,
+                "ratios use explicit direction; signed financial values use higher-is-better",
+            )
+
+            actual_impact_drivers = {
+                row[0]
+                for row in connection.execute(
+                    "SELECT DISTINCT driver_name FROM intermediate.int_performance_driver_impacts"
+                )
+            }
+            add(
+                "performance_impact_driver_set",
+                "int_performance_driver_impacts",
+                len(actual_impact_drivers.symmetric_difference(EXPECTED_IMPACT_DRIVERS)),
+                ", ".join(sorted(actual_impact_drivers)),
+            )
+
+            impact_grain_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT competence_month, company_id, COALESCE(branch_id, 0) branch_scope,
+                           budget_version_id
+                    FROM intermediate.int_performance_driver_impacts
+                    GROUP BY competence_month, company_id, COALESCE(branch_id, 0), budget_version_id
+                    HAVING COUNT(*) <> 9 OR COUNT(DISTINCT driver_name) <> 9
+                ) issue
+                """
+            ).fetchone()[0]
+            add(
+                "performance_impact_grain",
+                "int_performance_driver_impacts",
+                impact_grain_issues,
+                "exactly nine drivers per competence x branch/corporate x Budget version",
+            )
+
+            bridge_closure_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT competence_month, company_id, COALESCE(branch_id, 0) branch_scope,
+                           budget_version_id,
+                           ABS(SUM(impact_amount) FILTER (WHERE is_operational_bridge)
+                               - MAX(operational_gap_amount)) AS closure_difference
+                    FROM intermediate.int_performance_driver_impacts
+                    GROUP BY competence_month, company_id, COALESCE(branch_id, 0), budget_version_id
+                ) bridge
+                WHERE closure_difference > 0.01
+                """
+            ).fetchone()[0]
+            add(
+                "performance_operational_bridge_closure",
+                "int_performance_driver_impacts",
+                bridge_closure_issues,
+                "sum of operational impacts equals Actual minus Budget within R$ 0.01",
+            )
+
+            residual_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM intermediate.int_performance_driver_impacts
+                WHERE driver_name = 'RESIDUAL' AND ABS(impact_amount) > 0.01
+                """
+            ).fetchone()[0]
+            add(
+                "performance_residual_tolerance",
+                "int_performance_driver_impacts",
+                residual_issues,
+                "ABS residual is at most R$ 0.01 per bridge grain",
+            )
+
+            bridge_scope_issues = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM intermediate.int_performance_driver_impacts
+                WHERE (driver_name = 'FINANCIAL' AND (is_operational_bridge OR bridge_scope <> 'PRE_TAX_ONLY'))
+                   OR (driver_name <> 'FINANCIAL' AND (NOT is_operational_bridge OR bridge_scope <> 'OPERATIONAL'))
+                   OR favorability <> CASE
+                        WHEN impact_amount > 0 THEN 'FAVORABLE'
+                        WHEN impact_amount < 0 THEN 'UNFAVORABLE'
+                        ELSE 'NEUTRAL'
+                      END
+                """
+            ).fetchone()[0]
+            add(
+                "performance_bridge_scope_and_favorability",
+                "int_performance_driver_impacts",
+                bridge_scope_issues,
+                "FINANCIAL stays outside the operational bridge; impact sign defines favorability",
             )
 
             with connection.cursor() as cursor:

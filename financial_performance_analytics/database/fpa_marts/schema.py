@@ -4,6 +4,8 @@ from __future__ import annotations
 DIMENSIONS = (
     "dim_date",
     "dim_branch",
+    "dim_driver",
+    "dim_budget_version",
     "dim_account",
     "dim_dre",
     "dim_cost_center",
@@ -18,6 +20,8 @@ FACTS = (
     "fct_budget",
     "fct_sales",
     "fct_deliveries",
+    "fct_reconciliation",
+    "fct_performance_drivers",
 )
 
 
@@ -52,6 +56,8 @@ CREATE TABLE IF NOT EXISTS control.marts_quality_results (
 CREATE INDEX IF NOT EXISTS ix_marts_quality_results_run
     ON control.marts_quality_results (quality_run_id);
 
+DROP MATERIALIZED VIEW IF EXISTS marts.fct_performance_drivers;
+DROP MATERIALIZED VIEW IF EXISTS marts.fct_reconciliation;
 DROP MATERIALIZED VIEW IF EXISTS marts.fct_deliveries;
 DROP MATERIALIZED VIEW IF EXISTS marts.fct_sales;
 DROP MATERIALIZED VIEW IF EXISTS marts.fct_budget;
@@ -63,6 +69,8 @@ DROP MATERIALIZED VIEW IF EXISTS marts.dim_customer;
 DROP MATERIALIZED VIEW IF EXISTS marts.dim_cost_center;
 DROP MATERIALIZED VIEW IF EXISTS marts.dim_dre;
 DROP MATERIALIZED VIEW IF EXISTS marts.dim_account;
+DROP MATERIALIZED VIEW IF EXISTS marts.dim_budget_version;
+DROP MATERIALIZED VIEW IF EXISTS marts.dim_driver;
 DROP MATERIALIZED VIEW IF EXISTS marts.dim_branch;
 DROP MATERIALIZED VIEW IF EXISTS marts.dim_date;
 
@@ -82,7 +90,7 @@ WITH date_bounds AS (
 )
 SELECT
     0::INTEGER AS date_key,
-    NULL::DATE AS full_date,
+    '1900-01-01'::DATE AS full_date,
     0::SMALLINT AS calendar_year,
     0::SMALLINT AS calendar_quarter,
     0::SMALLINT AS calendar_month,
@@ -94,10 +102,11 @@ SELECT
     'UNKNOWN'::VARCHAR(20) AS day_name,
     0::SMALLINT AS iso_week,
     FALSE AS is_weekend,
-    NULL::DATE AS month_start_date,
-    NULL::DATE AS month_end_date,
+    '1900-01-01'::DATE AS month_start_date,
+    '1900-01-01'::DATE AS month_end_date,
     0::SMALLINT AS fiscal_year,
-    0::SMALLINT AS fiscal_period
+    0::SMALLINT AS fiscal_period,
+    TRUE AS is_unknown
 UNION ALL
 SELECT
     to_char(full_date, 'YYYYMMDD')::INTEGER AS date_key,
@@ -116,11 +125,12 @@ SELECT
     date_trunc('month', full_date)::DATE AS month_start_date,
     (date_trunc('month', full_date) + INTERVAL '1 month - 1 day')::DATE AS month_end_date,
     EXTRACT(YEAR FROM full_date)::SMALLINT AS fiscal_year,
-    EXTRACT(MONTH FROM full_date)::SMALLINT AS fiscal_period
+    EXTRACT(MONTH FROM full_date)::SMALLINT AS fiscal_period,
+    FALSE AS is_unknown
 FROM calendar;
 
 CREATE UNIQUE INDEX ux_dim_date_key ON marts.dim_date (date_key);
-CREATE UNIQUE INDEX ux_dim_date_value ON marts.dim_date (full_date) WHERE full_date IS NOT NULL;
+CREATE UNIQUE INDEX ux_dim_date_value ON marts.dim_date (full_date) WHERE NOT is_unknown;
 COMMENT ON MATERIALIZED VIEW marts.dim_date IS 'Calendario diario conformado cobrindo Actual e Budget.';
 
 CREATE MATERIALIZED VIEW marts.dim_branch AS
@@ -140,6 +150,29 @@ SELECT
     0::INTEGER AS warehouse_capacity_m3,
     FALSE AS is_distribution_center,
     FALSE AS is_active
+UNION ALL
+SELECT
+    -1::BIGINT AS branch_key,
+    -1::BIGINT AS branch_id,
+    company.company_id,
+    company.company_code,
+    company.trade_name AS company_name,
+    'CORPORATE'::VARCHAR(50) AS branch_code,
+    'Corporate'::VARCHAR(150) AS branch_name,
+    'CORPORATE'::VARCHAR(150) AS branch_type,
+    'Corporate'::VARCHAR(150) AS city,
+    'CO'::VARCHAR(50) AS state_code,
+    'CORPORATE'::VARCHAR(150) AS region,
+    NULL::TIMESTAMP AS opened_at,
+    0::INTEGER AS warehouse_capacity_m3,
+    FALSE AS is_distribution_center,
+    TRUE AS is_active
+FROM (
+    SELECT company_id, company_code, trade_name
+    FROM staging.stg_companies
+    ORDER BY company_id
+    LIMIT 1
+) company
 UNION ALL
 SELECT
     branch.branch_id AS branch_key,
@@ -163,6 +196,84 @@ JOIN staging.stg_companies company USING (company_id);
 CREATE UNIQUE INDEX ux_dim_branch_key ON marts.dim_branch (branch_key);
 CREATE UNIQUE INDEX ux_dim_branch_natural ON marts.dim_branch (branch_id);
 COMMENT ON MATERIALIZED VIEW marts.dim_branch IS 'Filiais e atributos organizacionais conformados.';
+
+CREATE MATERIALIZED VIEW marts.dim_driver AS
+SELECT
+    0::SMALLINT AS driver_key,
+    'UNKNOWN'::VARCHAR(30) AS driver_name,
+    'Unknown'::VARCHAR(100) AS driver_label,
+    0::SMALLINT AS display_order,
+    'NOT_APPLICABLE'::VARCHAR(60) AS default_impact_method,
+    'NOT_APPLICABLE'::VARCHAR(20) AS default_bridge_scope,
+    FALSE AS is_operational_bridge,
+    'NOT_APPLICABLE'::VARCHAR(40) AS favorability_basis,
+    FALSE AS is_active
+UNION ALL
+SELECT *
+FROM (VALUES
+    (1::SMALLINT, 'VOLUME'::VARCHAR(30), 'Volume'::VARCHAR(100), 1::SMALLINT,
+     'SEQUENTIAL_VOLUME'::VARCHAR(60), 'OPERATIONAL'::VARCHAR(20), TRUE,
+     'IMPACT_SIGN'::VARCHAR(40), TRUE),
+    (2, 'PRICE', 'Preco', 2, 'SEQUENTIAL_PRICE_AFTER_VOLUME', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (3, 'DISCOUNT', 'Desconto', 3, 'SEQUENTIAL_DISCOUNT_AFTER_PRICE', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (4, 'MIX', 'Mix', 4, 'SEQUENTIAL_MIX_AFTER_DISCOUNT', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (5, 'CMV', 'CMV', 5, 'DIRECT_COST_VARIANCE', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (6, 'LOGISTICS', 'Logistica', 6, 'DIRECT_COST_VARIANCE', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (7, 'OPEX', 'OPEX', 7, 'DIRECT_OPEX_VARIANCE', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE),
+    (8, 'FINANCIAL', 'Resultado Financeiro', 8, 'DIRECT_FINANCIAL_VARIANCE', 'PRE_TAX_ONLY', FALSE, 'IMPACT_SIGN', TRUE),
+    (9, 'RESIDUAL', 'Residual', 9, 'RESIDUAL_RECONCILIATION', 'OPERATIONAL', TRUE, 'IMPACT_SIGN', TRUE)
+) driver(
+    driver_key, driver_name, driver_label, display_order, default_impact_method,
+    default_bridge_scope, is_operational_bridge, favorability_basis, is_active
+);
+
+CREATE UNIQUE INDEX ux_dim_driver_key ON marts.dim_driver (driver_key);
+CREATE UNIQUE INDEX ux_dim_driver_natural ON marts.dim_driver (driver_name);
+CREATE UNIQUE INDEX ux_dim_driver_order ON marts.dim_driver (display_order);
+COMMENT ON MATERIALIZED VIEW marts.dim_driver IS
+    'Drivers conformados e ordenados; FINANCIAL fica fora do bridge do Resultado Operacional.';
+
+CREATE MATERIALIZED VIEW marts.dim_budget_version AS
+SELECT
+    0::BIGINT AS budget_version_key,
+    0::BIGINT AS budget_version_id,
+    'UNKNOWN'::VARCHAR(50) AS budget_version_code,
+    'UNKNOWN'::VARCHAR(30) AS scenario,
+    0::INTEGER AS fiscal_year,
+    0::INTEGER AS version_number,
+    'UNKNOWN'::VARCHAR(30) AS status,
+    NULL::TIMESTAMP AS approved_at,
+    NULL::DATE AS effective_from,
+    NULL::DATE AS effective_to,
+    FALSE AS is_current,
+    'UNKNOWN'::VARCHAR(10) AS currency_code
+UNION ALL
+SELECT
+    version.budget_version_id AS budget_version_key,
+    version.budget_version_id,
+    version.budget_version_code,
+    version.scenario,
+    version.fiscal_year,
+    version.version_number,
+    version.status,
+    version.approved_at,
+    version.effective_from,
+    version.effective_to,
+    version.is_current,
+    version.currency_code
+FROM staging.stg_budget_versions version;
+
+CREATE UNIQUE INDEX ux_dim_budget_version_key
+    ON marts.dim_budget_version (budget_version_key);
+CREATE UNIQUE INDEX ux_dim_budget_version_natural
+    ON marts.dim_budget_version (budget_version_id);
+CREATE UNIQUE INDEX ux_dim_budget_version_code
+    ON marts.dim_budget_version (budget_version_code);
+CREATE INDEX ix_dim_budget_version_selection
+    ON marts.dim_budget_version (fiscal_year, scenario, status, is_current);
+
+COMMENT ON MATERIALIZED VIEW marts.dim_budget_version IS
+    'Versoes de Budget conformadas para filtrar fatos financeira, operacional de entregas e de performance.';
 
 CREATE MATERIALIZED VIEW marts.dim_dre AS
 SELECT
@@ -276,7 +387,7 @@ SELECT
     cost_center.cost_center_name,
     cost_center.department_code,
     cost_center.department_name,
-    COALESCE(cost_center.branch_id, 0) AS source_branch_key,
+    COALESCE(cost_center.branch_id, -1) AS source_branch_key,
     cost_center.management_scope,
     cost_center.allocation_eligible,
     cost_center.valid_from,
@@ -456,15 +567,15 @@ COMMENT ON MATERIALIZED VIEW marts.dim_sales_representative IS 'Equipe comercial
 
 CREATE MATERIALIZED VIEW marts.fct_financial_entries AS
 SELECT
-    md5(concat_ws('|', financial.journal_line_id, COALESCE(allocation.allocated_branch_id, financial.branch_id, 0))) AS financial_entry_key,
+    md5(concat_ws('|', financial.journal_line_id, COALESCE(allocation.allocated_branch_id, financial.branch_id, -1))) AS financial_entry_key,
     financial.journal_line_id,
     financial.journal_entry_id,
     financial.line_number,
     to_char(financial.competence_date, 'YYYYMMDD')::INTEGER AS competence_date_key,
     to_char(financial.posting_date, 'YYYYMMDD')::INTEGER AS posting_date_key,
     financial.company_id,
-    COALESCE(allocation.allocated_branch_id, financial.branch_id, 0) AS branch_key,
-    COALESCE(financial.branch_id, 0) AS source_branch_key,
+    COALESCE(allocation.allocated_branch_id, financial.branch_id, -1) AS branch_key,
+    COALESCE(financial.branch_id, -1) AS source_branch_key,
     COALESCE(allocation.allocated_cost_center_id, financial.cost_center_id, 0) AS cost_center_key,
     account.account_id AS account_key,
     COALESCE(dre.display_order, 0)::SMALLINT AS dre_key,
@@ -506,14 +617,16 @@ COMMENT ON MATERIALIZED VIEW marts.fct_financial_entries IS 'Partida contabil/ge
 
 CREATE MATERIALIZED VIEW marts.fct_budget AS
 SELECT
-    budget.dre_budget_id AS budget_key,
+    md5(concat_ws('|', budget.dre_budget_id, COALESCE(allocation.allocated_branch_id, budget.branch_id, -1))) AS budget_key,
+    budget.dre_budget_id,
     budget.budget_version_id,
     budget.budget_version_code,
     budget.scenario,
     to_char(budget.competence_month, 'YYYYMMDD')::INTEGER AS date_key,
     budget.company_id,
-    COALESCE(budget.branch_id, 0) AS branch_key,
-    COALESCE(budget.cost_center_id, 0) AS cost_center_key,
+    COALESCE(allocation.allocated_branch_id, budget.branch_id, -1) AS branch_key,
+    COALESCE(budget.branch_id, -1) AS source_branch_key,
+    COALESCE(allocation.allocated_cost_center_id, budget.cost_center_id, 0) AS cost_center_key,
     account.account_id AS account_key,
     dre.display_order::SMALLINT AS dre_key,
     budget.account_code,
@@ -522,17 +635,21 @@ SELECT
     budget.budget_driver,
     budget.budget_driver_value,
     budget.source_budget_amount,
-    budget.budget_amount,
+    (budget.budget_amount * COALESCE(allocation.allocation_weight, 1))::NUMERIC(30,6) AS budget_amount,
+    COALESCE(allocation.allocation_status, 'NOT_APPLICABLE') AS allocation_status,
+    allocation.driver_type AS allocation_driver,
+    COALESCE(allocation.allocation_weight, 1)::NUMERIC(24,12) AS allocation_weight,
     budget.currency_code,
     budget.budget_row_count
 FROM intermediate.int_dre_budget budget
 JOIN staging.stg_chart_of_accounts account USING (account_code)
-JOIN intermediate.dre_lines dre USING (dre_line_id);
+JOIN intermediate.dre_lines dre USING (dre_line_id)
+LEFT JOIN intermediate.int_budget_allocated allocation USING (dre_budget_id);
 
 CREATE UNIQUE INDEX ux_fct_budget_key ON marts.fct_budget (budget_key);
 CREATE INDEX ix_fct_budget_analysis ON marts.fct_budget (date_key, dre_key, branch_key);
 CREATE INDEX ix_fct_budget_version ON marts.fct_budget (budget_version_id, account_key);
-COMMENT ON MATERIALIZED VIEW marts.fct_budget IS 'Budget assinado e conformado as dimensoes do Actual.';
+COMMENT ON MATERIALIZED VIEW marts.fct_budget IS 'Budget assinado, rateado corporativo->filial pelas mesmas regras do Actual (bases orcadas) e conformado as dimensoes do Actual.';
 
 CREATE MATERIALIZED VIEW marts.fct_sales AS
 SELECT
@@ -631,4 +748,130 @@ CREATE UNIQUE INDEX ux_fct_deliveries_key ON marts.fct_deliveries (delivery_key)
 CREATE INDEX ix_fct_deliveries_analysis ON marts.fct_deliveries (shipment_date_key, branch_key, carrier_key);
 CREATE INDEX ix_fct_deliveries_invoice ON marts.fct_deliveries (invoice_id);
 COMMENT ON MATERIALIZED VIEW marts.fct_deliveries IS 'Entrega no grao operacional com SLA, custo, cobranca e subsidio de frete.';
+
+CREATE MATERIALIZED VIEW marts.fct_performance_drivers AS
+SELECT
+    impact.driver_impact_id AS performance_driver_key,
+    to_char(impact.competence_month, 'YYYYMMDD')::INTEGER AS date_key,
+    impact.company_id,
+    COALESCE(impact.branch_id, -1) AS branch_key,
+    driver.driver_key,
+    impact.budget_version_id,
+    impact.budget_version_code,
+    impact.scenario,
+    impact.driver_name,
+    impact.driver_order,
+    impact.bridge_scope,
+    impact.is_operational_bridge,
+    impact.impact_method,
+    impact.driver_actual_value,
+    impact.driver_budget_value,
+    impact.impact_amount,
+    impact.impact_amount_abs,
+    impact.favorability,
+    impact.operational_actual_amount,
+    impact.operational_budget_amount,
+    impact.operational_gap_amount
+FROM intermediate.int_performance_driver_impacts impact
+JOIN marts.dim_driver driver USING (driver_name);
+
+CREATE UNIQUE INDEX ux_fct_performance_drivers_key
+    ON marts.fct_performance_drivers (performance_driver_key);
+CREATE UNIQUE INDEX ux_fct_performance_drivers_grain
+    ON marts.fct_performance_drivers (
+        date_key, company_id, branch_key, budget_version_id, driver_key
+    );
+CREATE INDEX ix_fct_performance_drivers_analysis
+    ON marts.fct_performance_drivers (
+        date_key, budget_version_id, driver_order, branch_key
+    );
+
+COMMENT ON MATERIALIZED VIEW marts.fct_performance_drivers IS
+    'Impactos Budget para Actual no grao mes x filial/Corporate x versao x driver; FINANCIAL nao participa do bridge operacional.';
+
+CREATE MATERIALIZED VIEW marts.fct_reconciliation AS
+WITH commercial AS (
+    SELECT
+        md5('COMMERCIAL|' || reconciliation.invoice_id::TEXT) AS reconciliation_key,
+        'COMMERCIAL'::VARCHAR(20) AS reconciliation_type,
+        COALESCE(
+            to_char(COALESCE(reconciliation.commercial_competence_date,
+                             reconciliation.accounting_competence_date), 'YYYYMMDD')::INTEGER,
+            0
+        ) AS date_key,
+        COALESCE(to_char(reconciliation.accounting_competence_date, 'YYYYMMDD')::INTEGER, 0)
+            AS accounting_date_key,
+        COALESCE(reconciliation.company_id, 0) AS company_id,
+        COALESCE(reconciliation.branch_id, 0) AS branch_key,
+        COALESCE(reconciliation.customer_id, 0) AS customer_key,
+        0::BIGINT AS carrier_key,
+        'INVOICE'::VARCHAR(30) AS source_document_type,
+        reconciliation.invoice_id::TEXT AS source_document_id,
+        reconciliation.invoice_number::TEXT AS source_document_number,
+        reconciliation.commercial_amount::NUMERIC(24,2) AS source_amount,
+        reconciliation.accounting_amount::NUMERIC(24,2) AS accounting_amount,
+        reconciliation.difference_amount::NUMERIC(24,2) AS difference_amount,
+        CASE WHEN reconciliation.commercial_competence_date IS NULL THEN 0 ELSE 1 END::BIGINT
+            AS source_record_count,
+        COALESCE(reconciliation.accounting_entry_count, 0)::BIGINT AS accounting_entry_count,
+        reconciliation.reconciliation_status,
+        (reconciliation.reconciliation_status = 'MATCHED') AS is_reconciled,
+        (reconciliation.reconciliation_status NOT IN ('MATCHED', 'CANCELED')) AS is_exception,
+        (reconciliation.reconciliation_status = 'CANCELED') AS is_canceled
+    FROM intermediate.int_reconciliation_commercial_accounting reconciliation
+), logistics AS (
+    SELECT
+        md5('LOGISTICS|' || reconciliation.reconciliation_id) AS reconciliation_key,
+        'LOGISTICS'::VARCHAR(20) AS reconciliation_type,
+        COALESCE(
+            to_char(COALESCE(reconciliation.shipment_date, reconciliation.source_batch_date,
+                             reconciliation.accounting_competence_date), 'YYYYMMDD')::INTEGER,
+            0
+        ) AS date_key,
+        COALESCE(to_char(reconciliation.accounting_competence_date, 'YYYYMMDD')::INTEGER, 0)
+            AS accounting_date_key,
+        COALESCE(branch.company_id, 0) AS company_id,
+        COALESCE(reconciliation.branch_id, 0) AS branch_key,
+        0::BIGINT AS customer_key,
+        COALESCE(reconciliation.carrier_id, 0) AS carrier_key,
+        'DAILY_FREIGHT_BATCH'::VARCHAR(30) AS source_document_type,
+        concat_ws('-',
+            to_char(COALESCE(reconciliation.source_batch_date, reconciliation.shipment_date,
+                             reconciliation.accounting_competence_date), 'YYYY-MM-DD'),
+            'B' || COALESCE(reconciliation.branch_id, 0),
+            'C' || COALESCE(reconciliation.carrier_id, 0)
+        )::TEXT AS source_document_id,
+        concat_ws('-',
+            to_char(COALESCE(reconciliation.source_batch_date, reconciliation.shipment_date,
+                             reconciliation.accounting_competence_date), 'YYYY-MM-DD'),
+            'B' || COALESCE(reconciliation.branch_id, 0),
+            'C' || COALESCE(reconciliation.carrier_id, 0)
+        )::TEXT AS source_document_number,
+        reconciliation.logistics_amount::NUMERIC(24,2) AS source_amount,
+        reconciliation.accounting_amount::NUMERIC(24,2) AS accounting_amount,
+        reconciliation.difference_amount::NUMERIC(24,2) AS difference_amount,
+        COALESCE(reconciliation.delivery_count, 0)::BIGINT AS source_record_count,
+        COALESCE(reconciliation.accounting_entry_count, 0)::BIGINT AS accounting_entry_count,
+        reconciliation.reconciliation_status,
+        (reconciliation.reconciliation_status = 'MATCHED') AS is_reconciled,
+        (reconciliation.reconciliation_status NOT IN ('MATCHED', 'CANCELED')) AS is_exception,
+        (reconciliation.reconciliation_status = 'CANCELED') AS is_canceled
+    FROM intermediate.int_reconciliation_logistics_accounting reconciliation
+    LEFT JOIN staging.stg_branches branch USING (branch_id)
+)
+SELECT * FROM commercial
+UNION ALL
+SELECT * FROM logistics;
+
+CREATE UNIQUE INDEX ux_fct_reconciliation_key
+    ON marts.fct_reconciliation (reconciliation_key);
+CREATE INDEX ix_fct_reconciliation_analysis
+    ON marts.fct_reconciliation (date_key, reconciliation_type, reconciliation_status, branch_key);
+CREATE INDEX ix_fct_reconciliation_accounting_date
+    ON marts.fct_reconciliation (accounting_date_key, reconciliation_type);
+CREATE INDEX ix_fct_reconciliation_document
+    ON marts.fct_reconciliation (source_document_type, source_document_id);
+
+COMMENT ON MATERIALIZED VIEW marts.fct_reconciliation IS
+    'Evento unificado de conciliacao Comercial e Logistica com flags de aceite, excecao e cancelamento.';
 """.strip() + "\n"
