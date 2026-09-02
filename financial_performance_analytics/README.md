@@ -1,11 +1,11 @@
 # Financial Performance Analytics
 
-> Pipeline end-to-end de dados financeiros em PostgreSQL, construído para transformar dados operacionais de ERP em uma camada analítica confiável para **DRE Gerencial, Budget vs Actual, análise de performance e drivers de resultado**.
+> Pipeline end-to-end de dados financeiros em PostgreSQL, construído para transformar dados operacionais de ERP em uma camada analítica confiável para **DRE Gerencial, Budget vs Atual, análise de performance e drivers de resultado**.
 
 ![Status](https://img.shields.io/badge/Pipeline-RAW%20%E2%86%92%20STAGING%20%E2%86%92%20INTERMEDIATE%20%E2%86%92%20MARTS-0f766e)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Analytics-336791)
 ![Data Quality](https://img.shields.io/badge/Data%20Quality-PASS-16a34a)
-![Power BI](https://img.shields.io/badge/Power%20BI-Executive%20Page%20pronta-F2C811)
+![Power BI](https://img.shields.io/badge/Power%20BI-2%20p%C3%A1ginas%20prontas-F2C811)
 
 <p align="center">
   <img src="docs/Arquitetura/tecnico/architecture_overview.png" alt="Arquitetura do Pipeline: ERP para RAW, STAGING, INTERMEDIATE, MARTS, Semantic Model e Power BI" width="900">
@@ -37,7 +37,7 @@ Semantic Model
 Power BI
 ```
 
-O pipeline financeiro e o modelo dimensional em PostgreSQL estão concluídos. A primeira página do Power BI, Executive Financial Performance, também já está construída, com modelo semântico, medidas DAX e diagnósticos interativos. DRE Gerencial e Performance Drivers são as próximas páginas.
+O pipeline financeiro e o modelo dimensional em PostgreSQL estão concluídos. As duas primeiras páginas do Power BI, Executive Financial Performance e DRE Gerencial, também já estão construídas, com modelo semântico, medidas DAX e diagnósticos interativos. Performance Drivers é a próxima página.
 
 ### Status do projeto
 
@@ -46,8 +46,8 @@ O pipeline financeiro e o modelo dimensional em PostgreSQL estão concluídos. A
 - DRE Gerencial e Budget conformados;
 - reconciliações comercial, logística e contábil implementadas;
 - drivers de performance calculados e reconciliados;
-- modelo semântico e medidas DAX da página Executive concluídos;
-- Power BI: página Executive Financial Performance pronta; DRE Gerencial e Performance Drivers em construção.
+- modelo semântico e medidas DAX das páginas Executive e DRE Gerencial concluídos;
+- Power BI: Executive Financial Performance e DRE Gerencial prontas; Performance Drivers em construção.
 
 ---
 
@@ -66,7 +66,7 @@ O cenário foi construído para permitir uma análise realista de performance fi
 - lançamentos contábeis, reversões e ajustes;
 - rateios gerenciais e conciliações entre módulos.
 
-Os dados de **Actual abrangem jan/2024 a jul/2026**, enquanto o **Budget cobre 2024 a 2026**, permitindo análises históricas, YoY, YTD e Budget vs Actual.
+Os dados de **Atual abrangem jan/2024 a jul/2026**, enquanto o **Budget cobre 2024 a 2026**, permitindo análises históricas, YoY, YTD e Budget vs Atual.
 
 ---
 
@@ -78,7 +78,7 @@ Os dados de **Actual abrangem jan/2024 a jul/2026**, enquanto o **Budget cobre 2
 
 1. Como Receita Líquida, Lucro Bruto, Resultado Operacional e Margem Operacional estão evoluindo ao longo do tempo?
 2. O crescimento de receita está sendo acompanhado pelo crescimento do resultado?
-3. Qual é o desvio entre **Actual e Budget** e em quais linhas da DRE ele está concentrado?
+3. Qual é o desvio entre **Atual e Budget** e em quais linhas da DRE ele está concentrado?
 4. Quais fatores explicam o desvio operacional: **volume, preço, desconto, mix, CMV, logística, OPEX ou residual**?
 5. Quais filiais, clientes, produtos ou categorias mais contribuem positiva ou negativamente para o resultado?
 6. O aumento do custo logístico está relacionado à expansão regional, distância, peso, transportadoras ou maior frequência de entregas?
@@ -99,7 +99,7 @@ O **resultado financeiro** é tratado como análise complementar e permanece for
 |---|---|
 | **RAW** | Preservar os dados da origem, histórico dos eventos e metadados de ingestão. |
 | **STAGING** | Tipagem, padronização e validações estruturais sem aplicar regra de negócio. |
-| **INTERMEDIATE** | Aplicar regras gerenciais: DRE, sinais, rateios, conciliações, Actual vs Budget e drivers. |
+| **INTERMEDIATE** | Aplicar regras gerenciais: DRE, sinais, rateios, conciliações, Atual vs Budget e drivers. |
 | **MARTS** | Entregar fatos e dimensões conformadas e otimizadas para análise. |
 | **CONTROL / QUALITY** | Registrar execução, idempotência, testes, reconciliações e quality gates do pipeline. |
 
@@ -142,7 +142,7 @@ Entre as principais regras implementadas estão:
 - normalização do sinal contábil para valor gerencial;
 - mapeamento Conta Contábil → Linha DRE;
 - competência financeira;
-- Actual e Budget conformados às mesmas dimensões;
+- Atual e Budget conformados às mesmas dimensões;
 - rateios por `REVENUE`, `HEADCOUNT` e `FIXED_PERCENTAGE`;
 - conservação integral de valor antes e depois dos rateios;
 - conciliação comercial × contabilidade;
@@ -164,7 +164,7 @@ A camada de consumo possui **7 tabelas fato e 11 dimensões conformadas**, mater
 
 | Tabela | Grão | Principal finalidade |
 |---|---|---|
-| `marts.fct_financial_entries` | lançamento financeiro/gerencial | Actual, DRE e análise contábil |
+| `marts.fct_financial_entries` | lançamento financeiro/gerencial | Atual, DRE e análise contábil |
 | `marts.fct_budget` | mês × conta × dimensões | Budget e variações |
 | `marts.fct_sales` | item de nota fiscal | receita, preço, desconto, mix e volume |
 | `marts.fct_deliveries` | entrega | frete, distância, peso, SLA e subsídio |
@@ -281,7 +281,9 @@ docs/
 └── Arquitetura/
     ├── tecnico/              diagramas completos para documentação/GitHub
     ├── apresentacao/         diagramas 1080×1350 para LinkedIn/portfólio
-    └── power-bi/             prints das páginas do relatório
+    └── power-bi/
+        ├── pagina-1/         prints da Executive Financial Performance
+        └── pagina-2/         prints da DRE Gerencial
 ```
 
 > Consulte [`database/README.md`](database/README.md) para detalhes de implementação, comandos de execução e validação local.
@@ -323,7 +325,7 @@ A carga é executada localmente pelos scripts do projeto, preservando controles 
 O Power BI consome a camada `marts` e é orientado a três perguntas analíticas principais:
 
 1. **Executive Financial Performance**: como receita, resultado e margens estão evoluindo? *(pronta)*
-2. **DRE Gerencial**: onde estão os principais desvios entre Actual e Budget? *(próxima página)*
+2. **DRE Gerencial**: onde estão os principais desvios entre Atual e Budget? *(pronta)*
 3. **Performance Drivers**: quais fatores explicam esses desvios e onde agir? *(próxima página)*
 
 O modelo semântico é enxuto, com medidas DAX focadas em análise e storytelling, deixando as regras complexas de transformação no PostgreSQL.
@@ -334,16 +336,65 @@ O modelo semântico é enxuto, com medidas DAX focadas em análise e storytellin
 
 ### Executive Financial Performance
 
-Visão executiva com Actual vs Budget, evolução mensal, desvio por filial, principais drivers de pressão e atingimento de meta. Os cards de KPI usam formatação condicional (verde/vermelho) para margem, variação e crescimento, e os gráficos de desvio têm diagnóstico interativo por clique, mostrando o contexto completo do mês ou da filial selecionada.
+Visão executiva com Atual vs Budget, evolução mensal, desvio por filial, principais drivers de pressão e atingimento de meta. Os cards de KPI usam formatação condicional (verde/vermelho) para margem, variação e crescimento, e os gráficos de desvio têm diagnóstico interativo por clique, mostrando o contexto completo do mês ou da filial selecionada.
 
 <p align="center">
-  <img src="docs/Arquitetura/power-bi/executive_financial_performance.png" alt="Power BI: Executive Financial Performance, visão executiva com KPIs, evolução mensal e desvio por filial" width="900">
+  <img src="docs/Arquitetura/power-bi/pagina-1/executive_financial_performance.png" alt="Power BI: Executive Financial Performance, visão executiva com KPIs, evolução mensal e desvio por filial" width="900">
 </p>
 
 <p align="center">
-  <img src="docs/Arquitetura/power-bi/executive_diagnostico_financeiro.png" alt="Power BI: diagnóstico financeiro interativo ao clicar em um mês, mostrando resultado atual vs Budget comparável" width="440">
-  <img src="docs/Arquitetura/power-bi/executive_diagnostico_desvio.png" alt="Power BI: diagnóstico do desvio ao clicar em uma barra, mostrando participação nas pressões desfavoráveis do período" width="440">
+  <img src="docs/Arquitetura/power-bi/pagina-1/executive_diagnostico_financeiro.png" alt="Power BI: diagnóstico financeiro interativo ao clicar em um mês, mostrando resultado atual vs Budget comparável" width="440">
+  <img src="docs/Arquitetura/power-bi/pagina-1/executive_diagnostico_desvio.png" alt="Power BI: diagnóstico do desvio ao clicar em uma barra, mostrando participação nas pressões desfavoráveis do período" width="440">
 </p>
+
+### DRE Gerencial
+
+Formação do resultado com Atual vs Budget comparável, contendo apenas o período em que existem dados realizados, mesmo quando o Budget cobre um intervalo maior. A matriz alterna o detalhamento entre Centro de Custo e Conta Contábil através de um parâmetro de campos, sem duplicar visual nem medidas, e os filtros de Centro de Custo e Conta Contábil ficam num painel de filtros avançados separado, mantendo a página principal limpa.
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_visao_geral.png" alt="Power BI: DRE Gerencial, matriz de formação do resultado com Atual vs Budget, desvios e composição das despesas operacionais" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_detalhamento_centro_custo.png" alt="Power BI: DRE Gerencial com detalhamento expandido por Centro de Custo" width="440">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_detalhamento_contabil.png" alt="Power BI: DRE Gerencial com o mesmo detalhamento expandido, alternado para Conta Contábil, mesma matriz e mesmas medidas" width="440">
+</p>
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_diagnostico_desvio.png" alt="Power BI: diagnóstico interativo de um desvio da DRE, mostrando Atual, Budget, desvio e favorabilidade" width="440">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_diagnostico_composicao.png" alt="Power BI: diagnóstico interativo da composição das despesas operacionais, mostrando participação e desvio da categoria selecionada" width="440">
+</p>
+
+<details>
+<summary><strong>Filtros avançados de Centro de Custo e Conta Contábil</strong></summary>
+<br>
+
+<p align="center">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_filtros_avancados.png" alt="Power BI: painel de filtros avançados de Centro de Custo e Conta Contábil, estado sem filtro aplicado" width="440">
+  <img src="docs/Arquitetura/power-bi/pagina-2/dre_gerencial_filtros_avancados_aplicados.png" alt="Power BI: painel de filtros avançados com Centro de Custo selecionado, recalculando a matriz para o contexto filtrado" width="440">
+</p>
+
+</details>
+
+#### Otimização de performance da matriz
+
+A matriz da DRE é o visual mais exigente da página, sete medidas por linha, hierarquia de até quatro níveis e um plano de apresentação (`dim_dre_layout`) desconectado das tabelas fato para permitir subtotal nativo e cores de linha inteira na Matriz. Essa combinação foi validada e otimizada com medição real, usando o Performance Analyzer do Power BI Desktop e consultas cronometradas direto no motor semântico:
+
+- medidas mantidas como valores numéricos, com formatação dinâmica em vez de `FORMAT()`, preservando ordenação e permitindo formatação condicional nativa;
+- cores de variação e YoY trocadas de medida DAX para regra de formatação condicional, eliminando a reavaliação de uma medida extra por célula;
+- `ISINSCOPE()` para identificar o nível da hierarquia (seção, linha, centro de custo ou conta) e interromper o cálculo antes de acionar a lógica financeira quando a linha não deve ser exibida;
+- `REMOVEFILTERS()` aplicado apenas sobre `dim_dre`, nunca sobre o modelo inteiro;
+- `TREATAS()` para aplicar o código da linha sobre a dimensão financeira sem relacionamento físico entre as tabelas de apresentação e de fato;
+- parâmetro de campos para alternar Centro de Custo e Conta Contábil na mesma matriz, evitando que as duas dimensões fossem cruzadas ao mesmo tempo;
+- remoção das tabelas de data automáticas, geradas por padrão pelo Power BI para cada coluna de data do modelo.
+
+| Cenário | Antes | Depois |
+|---|---:|---:|
+| Matriz completa (Centro × Conta simultâneos) | 1.621 ms | cenário eliminado pelo parâmetro de campos |
+| Matriz expandida, uso real (Performance Analyzer) | acima de 1.600 ms no pior caso | 400 a 1.073 ms conforme quantidade de seções abertas |
+| Cores por medida DAX vs regra nativa | 797 ms / 278 MB | 524 ms / 168 MB (≈ 40% de ganho) |
+
+Em todos os cenários medidos, entre 86% e 98% do tempo total está no Formula Engine, confirmando que o custo é de cálculo, não de volume de dado, os fatos envolvidos somam mais de 1,3 milhão de linhas e respondem em poucos milissegundos quando a medida é simples.
 
 ---
 
